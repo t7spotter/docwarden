@@ -18,6 +18,21 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install build twine
+
+      # Fail here rather than 15 seconds into the upload. A tag that does not
+      # match the package version builds the *previous* version's filenames,
+      # and PyPI refuses those permanently — filenames are never reusable, even
+      # after a delete. Catching it before the build keeps the version free.
+      - name: Tag must match the package version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(grep -oP '__version__ = "\K[^"]+' src/apiwarden/__init__.py)"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag v$tag does not match __version__ $version — bump src/apiwarden/__init__.py, or re-tag as v$version"
+            exit 1
+          fi
+          echo "releasing $version"
+
       - run: python -m build
       - run: twine check dist/*
       - uses: actions/upload-artifact@v4
