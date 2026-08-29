@@ -22,11 +22,16 @@ people and for the agents they work with.
 
 ## The two audiences
 
-**People** get a portal: every API in one sidebar, search across all of them, an
-operation browser, and a full rendered reference. It also surfaces the two
-things OpenAPI renderers normally drop on the floor — the `info.description`
-narrative, and the top-level `x-*` blocks where teams record rate limits, TTLs,
-and everything else that does not fit the schema.
+**People** get a portal built on [RapiDoc](https://github.com/rapi-doc/RapiDoc):
+a nav of colour-coded methods and URL paths, the read layout, server selection
+and try-it. On top of that it adds an API switcher and search across every
+spec, and it rescues the two things OpenAPI renderers normally drop — the
+`info.description` narrative, which becomes navigable headings, and the
+top-level `x-*` blocks where teams record rate limits, TTLs and everything else
+that does not fit the schema, which become tables in the overview.
+
+An edit to a spec reaches an open page in about a second, swapped in through
+the renderer rather than by reloading, so nobody loses their place.
 
 **Agents** get the same content as data:
 
@@ -35,7 +40,8 @@ and everything else that does not fit the schema.
 | `POST /mcp` | MCP server — `list_apis`, `search_operations`, `get_operation`, `get_schema`, `get_conventions`, `get_spec` |
 | `GET /index.json` | Every operation across every spec, one compact document |
 | `GET /llms.txt`, `/llms-full.txt` | The doc set as plain text |
-| `GET /openapi/<name>.json`, `.yaml` | The raw specs |
+| `GET /openapi/<name>.json`, `.yaml` | The raw specs, byte-faithful |
+| `GET /display/<name>.json` | The renderer's copy: `x-*` folded into the overview |
 | `GET /operation/<id>.json` | One operation, `$ref`s inlined |
 | `GET /revision.json` | Content hashes — poll to tell whether anything changed |
 | `GET /changes?since=…` | What moved since a baseline, breaking changes called out |
@@ -132,7 +138,8 @@ specs, or CLI flags.
 | `root` | `api-docs` | Directory holding the specs |
 | `title` | derived | Portal title |
 | `servers` | spec's own | Base URLs offered for try-it |
-| `renderer` | `vendor` | `vendor` serves the bundled renderer, `cdn` loads it remotely |
+| `renderer` | `vendor` | `vendor` serves the bundled RapiDoc, `cdn` loads it remotely |
+| `theme` | `auto` | `auto` follows the reader's OS setting; `light`/`dark` pin it |
 | `watch` | `False` | Reload when the spec files change |
 | `token` | `None` | Require a shared token on every request (also `APIDOCS_TOKEN`) |
 | `sources` | discovered | Explicit `{name: path}` map |
@@ -153,6 +160,11 @@ Specs are expected to be self-contained, using local `#/components/...` `$ref`s.
 python scripts/vendor_assets.py   # download the renderer bundle
 pip install -e ".[dev]"
 pytest
+
+# The browser tests are opt-in; they catch things a server-side test cannot,
+# such as the renderer silently failing to load.
+pip install -e ".[dev,browser]" && playwright install chromium
+pytest tests/test_browser.py
 ```
 
 `api-docs/` in this repository is a sample doc set used by the tests and by

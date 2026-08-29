@@ -45,8 +45,7 @@ def build_static(config: Config, output: Path) -> int:
         written += _write(output / name / "index.html", render.api_page(config, registry, spec))
         if spec.error:
             continue
-        servers = config.servers or [s.get("url", "") for s in spec.data.get("servers", []) if isinstance(s, dict)]
-        written += _write(output / name / "reference" / "index.html", render.reference_page(config, spec, servers))
+        written += _write(output / "display" / f"{name}.json", _json(render.display_spec(config, spec)))
         written += _write(output / "openapi" / f"{name}.json", _json(spec.data))
         written += _write(
             output / "openapi" / f"{name}.yaml",

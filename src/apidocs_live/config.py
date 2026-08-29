@@ -13,6 +13,7 @@ _KEYS = (
     "title",
     "servers",
     "renderer",
+    "theme",
     "watch",
     "token",
     "base_path",
@@ -31,6 +32,8 @@ class Config:
     servers: list[str] = field(default_factory=list)
     # "vendor" serves the bundled renderer; "cdn" loads it from jsdelivr.
     renderer: str = "vendor"
+    # "auto" follows the reader's OS setting; "light"/"dark" pin it.
+    theme: str = "auto"
     # Poll the spec files for changes and push live reload over SSE.
     watch: bool = False
     # When set, every route requires this shared token.
@@ -45,6 +48,8 @@ class Config:
         self.base_path = "/" + self.base_path.strip("/") if self.base_path.strip("/") else ""
         if self.renderer not in ("vendor", "cdn"):
             raise ValueError(f"renderer must be 'vendor' or 'cdn', got {self.renderer!r}")
+        if self.theme not in ("auto", "light", "dark"):
+            raise ValueError(f"theme must be 'auto', 'light' or 'dark', got {self.theme!r}")
 
     def url(self, path: str) -> str:
         """Absolute URL path for a route, honouring base_path."""

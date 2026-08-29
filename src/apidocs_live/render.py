@@ -8,6 +8,7 @@ iframe, so its styles never collide with ours.
 
 from __future__ import annotations
 
+import copy
 import html
 import json
 from typing import Any
@@ -17,7 +18,35 @@ from .config import Config
 from .index import api_summaries, build_index
 from .loader import Registry, Spec
 
-CDN_SCALAR = "https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.67.0/dist/browser/standalone.js"
+CDN_RAPIDOC = "https://cdn.jsdelivr.net/npm/rapidoc@9.3.8/dist/rapidoc-min.js"
+
+# The editor greys, so the portal reads like the panel it grew out of. RapiDoc
+# takes its palette as attributes rather than CSS variables, so the same values
+# live here and in shell.css.
+THEMES = {
+    "light": {
+        "bg": "#ffffff",
+        "text": "#1a1d21",
+        "nav_bg": "#f3f3f3",
+        "nav_text": "#3b4048",
+        "nav_hover": "#e4e6e9",
+        "accent": "#0066b8",
+    },
+    "dark": {
+        "bg": "#1e1e1e",
+        "text": "#d4d4d4",
+        "nav_bg": "#252526",
+        "nav_text": "#bbbbbb",
+        "nav_hover": "#37373d",
+        "accent": "#4daafc",
+    },
+}
+
+# Tahoma and Noto Sans are here for their broad right-to-left coverage.
+FONT_STACK = (
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Tahoma, '
+    'Roboto, "Helvetica Neue", Arial, sans-serif'
+)
 
 _PAGE = """<!doctype html>
 <html lang="en">
@@ -29,10 +58,8 @@ _PAGE = """<!doctype html>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128218;</text></svg>">
 </head>
 <body>
-<div class="layout">
-<aside class="sidebar">{sidebar}</aside>
+<header class="topbar">{topbar}</header>
 <main class="main">{main}</main>
-</div>
 <script>window.APIDOCS = {config};</script>
 <script src="{static}/shell.js"></script>
 </body>
@@ -45,51 +72,46 @@ def _e(value: Any) -> str:
 
 
 def page(config: Config, registry: Registry, title: str, main: str, active: str = "") -> str:
+    """The frame for pages RapiDoc does not render: the landing and changes."""
     payload = {
         "base": config.base_path,
         "watch": config.watch,
         "revision": registry.revision,
+        "theme": config.theme,
     }
     return _PAGE.format(
         title=_e(title),
         static=_e(config.url("_static")),
-        sidebar=_sidebar(config, registry, active),
+        topbar=_topbar(config, registry, active),
         main=main,
         config=json.dumps(payload),
     )
 
 
-def _sidebar(config: Config, registry: Registry, active: str) -> str:
-    rows = []
-    for api in api_summaries(registry):
-        classes = "active" if api["app"] == active else ""
-        rows.append(
-            f'<li><a class="{classes}" href="{_e(config.url(api["app"] + "/"))}">'
-            f'<span>{_e(api["title"])}</span>'
-            f'<span class="nav-count">{api["operations"]}</span></a></li>'
-        )
-
-    changes_url = _e(config.url("changes"))
-    changes_active = "active" if active == "__changes__" else ""
-
-    agent_links = "".join(
-        f'<li><a href="{_e(config.url(path))}">{_e(label)}</a></li>'
-        for label, path in (("index.json", "index.json"), ("llms.txt", "llms.txt"), ("openapi", "openapi/"))
+def _topbar(config: Config, registry: Registry, active: str) -> str:
+    options = "".join(
+        f'<option value="{_e(config.url(api["app"] + "/"))}"'
+        f'{" selected" if api["app"] == active else ""}>{_e(api["title"])}</option>'
+        for api in api_summaries(registry)
     )
+    changes = "active" if active == "__changes__" else ""
 
     return f"""
-<h1 class="brand"><a href="{_e(config.url("/"))}">{_e(config.title)}</a></h1>
-<p class="brand-sub">rev {_e(registry.revision)}</p>
-<div class="search">
-  <input id="search-input" type="search" placeholder="Search operations…" autocomplete="off" aria-label="Search operations">
-  <ul id="search-results" class="search-results"></ul>
+<a class="portal-title" href="{_e(config.url("/"))}">{_e(config.title)}</a>
+<select class="portal-switch" id="api-switch" aria-label="Choose an API">
+  <option value="">Choose an API…</option>{options}
+</select>
+<div class="topbar-search">
+  <input class="portal-search" id="search-input" type="search" placeholder="Search all APIs…"
+         autocomplete="off" aria-label="Search every API">
+  <ul class="portal-results" id="search-results"></ul>
 </div>
-<p class="nav-label">APIs</p>
-<ul class="nav-list">{"".join(rows)}</ul>
-<p class="nav-label">Changes</p>
-<ul class="nav-list"><li><a class="{changes_active}" href="{changes_url}"><span>What changed</span></a></li></ul>
-<p class="nav-label">For agents</p>
-<ul class="nav-list">{agent_links}</ul>
+<nav class="topbar-links">
+  <a class="{changes}" href="{_e(config.url("changes"))}">Changes</a>
+  <a href="{_e(config.url("index.json"))}">index.json</a>
+  <a href="{_e(config.url("llms.txt"))}">llms.txt</a>
+</nav>
+<span class="topbar-rev">rev {_e(registry.revision)}</span>
 """
 
 
@@ -157,159 +179,173 @@ def _agent_box(config: Config) -> str:
 # ---------------------------------------------------------------- one API
 
 
-def api_page(config: Config, registry: Registry, spec: Spec) -> str:
-    if spec.error:
-        main = f'<div class="page-head"><h1>{_e(spec.name)}</h1></div><div class="notice">{_e(spec.error)}</div>'
-        return page(config, registry, spec.name, main, active=spec.name)
-
-    entries = [entry for entry in build_index(registry) if entry["app"] == spec.name]
-    servers = [s.get("url", "") for s in spec.data.get("servers", []) if isinstance(s, dict)]
-
-    pills = [f'<span class="pill">v{_e(spec.version)}</span>', f'<span class="pill">{len(entries)} operations</span>']
-    pills += [f'<span class="pill pill-accent">{_e(url)}</span>' for url in servers[:2]]
-
-    reference_src = config.url(f"{spec.name}/reference")
-
-    main = f"""
-<div class="page-head">
-  <h1>{_e(spec.title)}</h1>
-  <p>{_e(md.strip(spec.description, 190))}</p>
-  <div class="meta-row">{"".join(pills)}</div>
-</div>
-<div class="tabs" data-tabs role="tablist">
-  <button data-tab="operations" role="tab">Operations</button>
-  <button data-tab="reference" role="tab">Reference</button>
-  <button data-tab="conventions" role="tab">Conventions</button>
-  <button data-tab="limits" role="tab">Limits &amp; specs</button>
-</div>
-<section id="panel-operations" class="tab-panel">{_operations(entries)}</section>
-<section id="panel-reference" class="tab-panel" hidden>
-  <iframe class="frame" data-src="{_e(reference_src)}" title="{_e(spec.title)} reference"></iframe>
-</section>
-<section id="panel-conventions" class="tab-panel prose" hidden>{_conventions(spec)}</section>
-<section id="panel-limits" class="tab-panel" hidden>{_extensions(spec)}</section>
-"""
-    return page(config, registry, f"{spec.title} · {config.title}", main, active=spec.name)
-
-
-def _operations(entries: list[dict[str, Any]]) -> str:
-    if not entries:
-        return '<p class="empty">This spec declares no operations.</p>'
-
-    rows = []
-    for entry in entries:
-        method = entry["method"].lower()
-        statuses = "".join(
-            f'<li class="status status-{str(code)[0]}">{_e(code)} <span style="opacity:.7">{_e(name)}</span></li>'
-            for code, name in entry["responses"].items()
-        )
-        lock = '<span class="lock" title="Requires authentication">&#128274;</span>' if entry["auth"] != "public" else ""
-        request = (
-            f'<h4>Request body</h4><p><code>{_e(entry["request"])}</code></p>' if entry["request"] else ""
-        )
-        rows.append(
-            f"""<details class="op" data-op="{_e(entry["id"])}" id="op-{_e(entry["id"])}">
-<summary class="op-head">
-  <span class="method method-{method}">{_e(entry["method"])}</span>
-  <span><span class="op-path">{_e(entry["path"])}</span><span class="op-summary">{_e(entry["summary"])}</span></span>
-  <span class="op-flags">{lock}<span class="pill">{_e(entry["id"])}</span></span>
-</summary>
-<div class="op-body">
-  <h4>Responses</h4>
-  <ul class="status-list">{statuses}</ul>
-  {request}
-  <h4>Full definition</h4>
-  <pre><code data-detail>Loading…</code></pre>
-</div>
-</details>"""
-        )
-    return f'<div class="ops" id="operations">{"".join(rows)}</div>'
-
-
-def _conventions(spec: Spec) -> str:
-    parts = [md.render(spec.description)] if spec.description else []
-
-    tags = [tag for tag in spec.data.get("tags", []) if isinstance(tag, dict)]
-    if tags:
-        parts.append("<h2>Tags</h2>")
-        for tag in tags:
-            parts.append(f'<h3>{_e(tag.get("name"))}</h3>{md.render(tag.get("description", ""))}')
-
-    schemes = spec.data.get("components", {}).get("securitySchemes") or {}
-    if schemes:
-        rows = "".join(
-            f"<tr><th>{_e(name)}</th><td>{_e(json.dumps(value, ensure_ascii=False))}</td></tr>"
-            for name, value in schemes.items()
-        )
-        parts.append(f'<h2>Security schemes</h2><div class="ext-block"><table class="kv">{rows}</table></div>')
-
-    return "".join(parts) or '<p class="empty">This spec carries no description.</p>'
-
-
-def _extensions(spec: Spec) -> str:
-    extensions = spec.extensions
-    if not extensions:
-        return '<p class="empty">This spec declares no x-* blocks.</p>'
-
-    blocks = []
-    for name, value in extensions.items():
-        blocks.append(f'<div class="ext-block"><h3>{_e(name)}</h3>{_ext_table(value)}</div>')
-
-    note = (
-        '<p class="empty" style="margin-bottom:16px">Vendor extensions from the spec. '
-        "Standard renderers drop these, so they live here.</p>"
-    )
-    return note + "".join(blocks)
-
-
-def _ext_table(value: Any) -> str:
-    if isinstance(value, dict):
-        rows = "".join(
-            f"<tr><th>{_e(key)}</th><td>{_e(_scalar(item))}</td></tr>" for key, item in value.items()
-        )
-        return f'<table class="kv">{rows}</table>'
-    if isinstance(value, list):
-        rows = "".join(f"<tr><td>{_e(_scalar(item))}</td></tr>" for item in value)
-        return f'<table class="kv">{rows}</table>'
-    return f'<table class="kv"><tr><td>{_e(_scalar(value))}</td></tr></table>'
-
-
-def _scalar(value: Any) -> str:
-    if isinstance(value, (dict, list)):
-        return json.dumps(value, ensure_ascii=False, indent=2)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    return str(value)
-
-
-# ---------------------------------------------------------------- reference frame
-
-
-def reference_page(config: Config, spec: Spec, servers: list[str]) -> str:
-    """A bare page hosting the renderer, loaded in an iframe by api_page."""
-    script = CDN_SCALAR if config.renderer == "cdn" else config.url("_static/vendor/scalar.js")
-    settings: dict[str, Any] = {
-        "url": config.url(f"openapi/{spec.name}.json"),
-        "hideDownloadButton": False,
-        "darkMode": None,
-    }
-    if servers:
-        settings["servers"] = [{"url": url} for url in servers]
-
-    return f"""<!doctype html>
+# RapiDoc, configured the way the VS Code OpenAPI viewer configures it: the
+# read layout, a nav of colour-coded methods showing URL paths, server
+# selection and try-it enabled. Everything below that is ours.
+_RAPIDOC = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{_e(spec.title)}</title>
-<style>body {{ margin: 0; }}</style>
+<title>{title}</title>
+<!-- shell.css styles the nav-logo slot: slotted content stays in the light DOM
+     and is styled by this document, not by the shadow root. -->
+<link rel="stylesheet" href="{static}/shell.css">
+<link rel="stylesheet" href="{static}/rapidoc-extra.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128218;</text></svg>">
+<style>
+  html, body {{ margin: 0; height: 100%; background: {bg}; }}
+  rapi-doc {{ width: 100%; height: 100%; }}
+</style>
 </head>
 <body>
-<script id="api-reference" data-configuration='{html.escape(json.dumps(settings), quote=True)}'></script>
-<script src="{_e(script)}"></script>
+<rapi-doc
+  id="docs"
+  css-file="rapidoc-extra.css"
+  theme="{theme}"
+  bg-color="{bg}"
+  text-color="{text}"
+  nav-bg-color="{nav_bg}"
+  nav-text-color="{nav_text}"
+  nav-hover-bg-color="{nav_hover}"
+  nav-accent-color="{accent}"
+  primary-color="{accent}"
+  render-style="read"
+  show-header="false"
+  show-info="true"
+  show-components="true"
+  allow-authentication="true"
+  allow-try="true"
+  allow-search="true"
+  allow-advanced-search="true"
+  allow-server-selection="true"
+  allow-spec-url-load="false"
+  allow-spec-file-load="false"
+  allow-api-list-style-selection="true"
+  show-method-in-nav-bar="as-colored-block"
+  use-path-in-nav-bar="true"
+  info-description-headings-in-navbar="true"
+  nav-item-spacing="relaxed"
+  schema-style="table"
+  default-schema-tab="schema"
+  regular-font="{font}"
+  update-route="false"
+>
+  <div slot="nav-logo" class="portal-nav">{nav}</div>
+</rapi-doc>
+<script>window.APIDOCS = {config};</script>
+<script src="{script}"></script>
+<script src="{static}/shell.js"></script>
 </body>
 </html>
 """
+
+
+def api_page(config: Config, registry: Registry, spec: Spec) -> str:
+    """One API, rendered by RapiDoc, with our portal navigation in its nav."""
+    if spec.error:
+        main = f'<div class="page-head"><h1>{_e(spec.name)}</h1></div><div class="notice">{_e(spec.error)}</div>'
+        return page(config, registry, spec.name, main, active=spec.name)
+
+    # "auto" renders light and lets shell.js repaint from prefers-color-scheme
+    # on load, so there is no flash for a reader who pinned a theme.
+    theme_name = "dark" if config.theme == "dark" else "light"
+    palette = dict(THEMES[theme_name], theme=theme_name)
+    script = CDN_RAPIDOC if config.renderer == "cdn" else config.url("_static/vendor/rapidoc.js")
+
+    payload = {
+        "base": config.base_path,
+        "watch": config.watch,
+        "revision": registry.revision,
+        "app": spec.name,
+        "spec": config.url(f"display/{spec.name}.json"),
+        "theme": config.theme,
+    }
+
+    return _RAPIDOC.format(
+        title=_e(f"{spec.title} · {config.title}"),
+        static=_e(config.url("_static")),
+        script=_e(script),
+        nav=_portal_nav(config, registry, spec.name),
+        config=json.dumps(payload),
+        font=_e(FONT_STACK),
+        **{key: _e(value) for key, value in palette.items()},
+    )
+
+
+def _portal_nav(config: Config, registry: Registry, active: str) -> str:
+    """What goes in RapiDoc's nav-logo slot: which API, and search across all."""
+    options = "".join(
+        f'<option value="{_e(config.url(api["app"] + "/"))}"'
+        f'{" selected" if api["app"] == active else ""}>{_e(api["title"])}</option>'
+        for api in api_summaries(registry)
+    )
+
+    return f"""
+<a class="portal-title" href="{_e(config.url("/"))}">{_e(config.title)}</a>
+<select class="portal-switch" id="api-switch" aria-label="Choose an API">{options}</select>
+<input class="portal-search" id="search-input" type="search" placeholder="Search all APIs…"
+       autocomplete="off" aria-label="Search every API">
+<ul class="portal-results" id="search-results"></ul>
+<div class="portal-links">
+  <a href="{_e(config.url("changes"))}">Changes</a>
+  <a href="{_e(config.url("index.json"))}">index.json</a>
+  <a href="{_e(config.url("llms.txt"))}">llms.txt</a>
+</div>
+"""
+
+
+# ---------------------------------------------------------------- display spec
+
+
+def display_spec(config: Config, spec: Spec) -> dict[str, Any]:
+    """The copy RapiDoc renders.
+
+    Two departures from the file on disk, both presentational: the top-level
+    x-* blocks are appended to info.description so they are visible (and, with
+    info-description-headings-in-navbar, navigable) instead of being dropped,
+    and the configured servers win over the ones in the file. The raw spec
+    stays untouched at /openapi/<name>.json for downloads and agents.
+    """
+    document = copy.deepcopy(spec.data)
+
+    extensions = spec.extensions
+    if extensions:
+        info = document.setdefault("info", {})
+        info["description"] = (info.get("description") or "").rstrip() + _extensions_markdown(extensions)
+
+    if config.servers:
+        document["servers"] = [{"url": url} for url in config.servers]
+
+    return document
+
+
+def _extensions_markdown(extensions: dict[str, Any]) -> str:
+    lines = ["", "", "## Limits & specifications", ""]
+    for name, value in extensions.items():
+        lines.append(f"### {name}")
+        lines.append("")
+        if isinstance(value, dict):
+            lines += ["| | |", "|---|---|"]
+            for key, item in value.items():
+                lines.append(f"| `{key}` | {_md_cell(item)} |")
+        elif isinstance(value, list):
+            lines += [f"- {_md_cell(item)}" for item in value]
+        else:
+            lines.append(_md_cell(value))
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _md_cell(value: Any) -> str:
+    if isinstance(value, (dict, list)):
+        text = json.dumps(value, ensure_ascii=False)
+    elif isinstance(value, bool):
+        text = "true" if value else "false"
+    else:
+        text = str(value)
+    # Table cells are one line, and a pipe would end the cell early.
+    return text.replace("|", "\\|").replace("\n", " ").strip()
 
 
 # ---------------------------------------------------------------- changes

@@ -146,6 +146,11 @@ def test_config_rejects_unknown_keys():
         from_dict({"nonsense": 1})
 
 
+def test_config_rejects_an_unknown_theme():
+    with pytest.raises(ValueError, match="theme"):
+        Config(theme="chartreuse")
+
+
 def test_config_rejects_an_unknown_renderer():
     with pytest.raises(ValueError, match="renderer"):
         Config(renderer="crayons")

@@ -114,6 +114,15 @@ def handle(request: Request, portal: Portal) -> Response:
     if path.startswith("openapi/"):
         return _spec_file(registry, path[len("openapi/") :])
 
+    if path.startswith("display/") and path.endswith(".json"):
+        # The renderer's copy: x-* blocks folded into the overview, configured
+        # servers applied. /openapi/<name>.json stays byte-faithful.
+        name = path[len("display/") : -len(".json")]
+        spec = registry.get(name)
+        if spec is None or spec.error:
+            return not_found(f"no API {name!r}")
+        return json_response(render.display_spec(config, spec))
+
     if path.startswith("operation/") and path.endswith(".json"):
         operation_id = path[len("operation/") : -len(".json")]
         detail = operation_detail(registry, _unquote(operation_id))
@@ -129,15 +138,10 @@ def handle(request: Request, portal: Portal) -> Response:
         found = conventions(registry, app)
         return json_response(found) if found else not_found(f"no API {app!r}")
 
-    # /<app>/ and /<app>/reference
     head, _, tail = path.partition("/")
     spec = registry.get(head)
-    if spec is not None:
-        if tail in ("", "index.html"):
-            return html(render.api_page(config, registry, spec))
-        if tail == "reference":
-            servers = config.servers or _origin_servers(request, spec)
-            return html(render.reference_page(config, spec, servers))
+    if spec is not None and tail in ("", "index.html"):
+        return html(render.api_page(config, registry, spec))
 
     return not_found(f"no route for /{path}")
 
@@ -225,11 +229,6 @@ def _spec_file(registry: Registry, filename: str) -> Response:
             body=body.encode("utf-8"),
         )
     return not_found("ask for .json or .yaml")
-
-
-def _origin_servers(request: Request, spec) -> list[str]:
-    """Fall back to the spec's own servers block."""
-    return [s.get("url", "") for s in spec.data.get("servers", []) if isinstance(s, dict)]
 
 
 def _mcp(request: Request, portal: Portal) -> Response:

@@ -13,21 +13,18 @@ import sys
 import urllib.request
 from pathlib import Path
 
-SCALAR_VERSION = "1.67.0"
-SCALAR_URL = (
-    f"https://cdn.jsdelivr.net/npm/@scalar/api-reference@{SCALAR_VERSION}"
-    "/dist/browser/standalone.js"
-)
+RAPIDOC_VERSION = "9.3.8"
+RAPIDOC_URL = f"https://cdn.jsdelivr.net/npm/rapidoc@{RAPIDOC_VERSION}/dist/rapidoc-min.js"
 
 VENDOR_DIR = Path(__file__).resolve().parent.parent / "src" / "apidocs_live" / "static" / "vendor"
 
 
 def main() -> int:
     VENDOR_DIR.mkdir(parents=True, exist_ok=True)
-    target = VENDOR_DIR / "scalar.js"
+    target = VENDOR_DIR / "rapidoc.js"
 
-    print(f"downloading {SCALAR_URL}")
-    with urllib.request.urlopen(SCALAR_URL, timeout=60) as response:
+    print(f"downloading {RAPIDOC_URL}")
+    with urllib.request.urlopen(RAPIDOC_URL, timeout=60) as response:
         payload = response.read()
 
     if len(payload) < 100_000:
@@ -35,8 +32,13 @@ def main() -> int:
         return 1
 
     target.write_bytes(payload)
-    (VENDOR_DIR / "VERSION").write_text(f"@scalar/api-reference@{SCALAR_VERSION}\n", encoding="utf-8")
+    (VENDOR_DIR / "VERSION").write_text(f"rapidoc@{RAPIDOC_VERSION}\n", encoding="utf-8")
     print(f"wrote {target} ({len(payload) / 1_048_576:.1f} MB)")
+
+    stale = VENDOR_DIR / "scalar.js"
+    if stale.exists():
+        stale.unlink()
+        print(f"removed {stale}")
     return 0
 
 

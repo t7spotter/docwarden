@@ -24,21 +24,54 @@ def test_landing_page_lists_every_api(portal, registry):
         assert f'href="/{name}/"' in markup
 
 
-def test_api_page_and_reference_frame(portal, registry):
+def test_api_page_hosts_the_renderer_with_portal_nav(portal, registry):
     name = registry.names()[0]
-    assert get(portal, f"/{name}/").status == 200
-    reference = get(portal, f"/{name}/reference")
-    assert reference.status == 200
-    assert "api-reference" in reference.body.decode()
+    markup = get(portal, f"/{name}/").body.decode()
+
+    assert "<rapi-doc" in markup
+    assert 'render-style="read"' in markup
+    assert 'show-method-in-nav-bar="as-colored-block"' in markup
+    # Our switcher and cross-spec search live in the renderer's own nav slot.
+    assert 'slot="nav-logo"' in markup
+    assert 'id="api-switch"' in markup
+    assert 'id="search-input"' in markup
+    assert f'"spec": "/display/{name}.json"' in markup
 
 
-def test_api_page_surfaces_vendor_extensions(portal, registry):
+def test_display_spec_carries_the_vendor_extensions(portal, registry):
     name = next((n for n, s in registry.specs.items() if s.extensions), None)
     if name is None:
         pytest.skip("the sample doc set declares no x-* blocks")
-    markup = get(portal, f"/{name}/").body.decode()
+
+    response = get(portal, f"/display/{name}.json")
+    assert response.status == 200
+    description = body(response)["info"]["description"]
     for key in registry.specs[name].extensions:
-        assert key in markup
+        assert key in description
+
+
+def test_display_spec_leaves_the_raw_spec_untouched(portal, registry):
+    name = next((n for n, s in registry.specs.items() if s.extensions), None)
+    if name is None:
+        pytest.skip("the sample doc set declares no x-* blocks")
+
+    raw = body(get(portal, f"/openapi/{name}.json"))
+    assert raw == registry.specs[name].data
+    assert raw["info"]["description"] == registry.specs[name].description
+
+
+def test_display_spec_applies_configured_servers(registry, sample_root):
+    portal = Portal(Config(root=sample_root, servers=["https://api.example.test"]), registry)
+    document = body(get(portal, f"/display/{registry.names()[0]}.json"))
+    assert document["servers"] == [{"url": "https://api.example.test"}]
+
+
+def test_display_spec_of_an_unknown_api_is_404(portal):
+    assert get(portal, "/display/nope.json").status == 404
+
+
+def test_the_reference_route_is_gone(portal, registry):
+    assert get(portal, f"/{registry.names()[0]}/reference").status == 404
 
 
 def test_index_json_matches_the_index(portal, registry):
@@ -162,12 +195,26 @@ def test_sse_stream_emits_the_current_revision(registry, sample_root):
 
 
 def test_head_and_cdn_renderer(registry, sample_root):
-    from apidocs_live.render import CDN_SCALAR
+    from apidocs_live.render import CDN_RAPIDOC
 
     portal = Portal(Config(root=sample_root, renderer="cdn"), registry)
-    name = registry.names()[0]
-    assert CDN_SCALAR in get(portal, f"/{name}/reference").body.decode()
+    markup = get(portal, f"/{registry.names()[0]}/").body.decode()
+    assert CDN_RAPIDOC in markup
+    assert "/_static/vendor/rapidoc.js" not in markup
     assert handle(Request("HEAD", "/health"), portal).status == 200
+
+
+def test_vendored_renderer_is_served(portal, registry):
+    assert "/_static/vendor/rapidoc.js" in get(portal, f"/{registry.names()[0]}/").body.decode()
+    assert get(portal, "/_static/vendor/rapidoc.js").status == 200
+    assert get(portal, "/_static/rapidoc-extra.css").status == 200
+
+
+def test_theme_is_pinned_when_configured(registry, sample_root):
+    portal = Portal(Config(root=sample_root, theme="dark"), registry)
+    markup = get(portal, f"/{registry.names()[0]}/").body.decode()
+    assert 'theme="dark"' in markup
+    assert "#1e1e1e" in markup
 
 
 def test_build_portal_starts_and_stops_a_watcher(sample_root):
@@ -185,3 +232,33 @@ def test_base_path_does_not_swallow_a_similar_prefix(registry, sample_root):
     portal = Portal(Config(root=sample_root, base_path="api-docs"), registry)
     assert get(portal, "/api-docs/health").status == 200
     assert get(portal, "/api-docs-internal/health").status == 404
+
+
+def test_display_spec_escapes_pipes_in_extension_tables(registry, sample_root):
+    # Extension values become markdown table cells; an unescaped pipe would
+    # end the cell early and mangle the table.
+    from apidocs_live.render import display_spec
+
+    spec = registry.specs[registry.names()[0]]
+    spec.data["x-test-block"] = {"pattern": "a|b|c", "multi": "one\ntwo"}
+    try:
+        description = display_spec(Config(root=sample_root), spec)["info"]["description"]
+        row = next(line for line in description.splitlines() if "`pattern`" in line)
+        assert row == r"| `pattern` | a\|b\|c |"
+        # A newline inside a value would break the row onto two lines.
+        assert "one two" in description
+    finally:
+        spec.data.pop("x-test-block")
+
+
+def test_display_spec_without_extensions_keeps_the_description(registry, sample_root):
+    from apidocs_live.render import display_spec
+
+    spec = registry.specs[registry.names()[0]]
+    saved = {key: spec.data.pop(key) for key in list(spec.data) if key.startswith("x-")}
+    try:
+        document = display_spec(Config(root=sample_root), spec)
+        assert document["info"]["description"] == spec.description
+        assert "Limits & specifications" not in document["info"]["description"]
+    finally:
+        spec.data.update(saved)

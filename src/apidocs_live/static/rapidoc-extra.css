@@ -1,0 +1,36 @@
+/* Injected into RapiDoc's shadow DOM via its css-file attribute.
+   Only two jobs: make the portal navigation sit correctly in the nav slot,
+   and let mixed-direction text lay itself out. */
+
+/* Descriptions and examples can be in any script. `plaintext` is the CSS
+   equivalent of dir="auto": each paragraph takes its direction from its own
+   first strong character, so a right-to-left description reads correctly
+   without forcing the whole page into rtl. */
+.m-markdown p,
+.m-markdown li,
+.m-markdown td,
+.m-markdown th,
+.m-markdown blockquote,
+.descr,
+.title,
+.tbl-descr,
+.param-description {
+  unicode-bidi: plaintext;
+}
+
+/* Keep code, paths and JSON strictly left-to-right even inside such a block. */
+.m-markdown code,
+.m-markdown pre,
+.mono-font,
+.method-endpoint,
+.path {
+  unicode-bidi: normal;
+  direction: ltr;
+}
+
+/* The nav-logo slot holds our portal switcher; give it room and a divider. */
+::slotted([slot="nav-logo"]) {
+  padding: 14px 14px 12px 14px !important;
+  border-bottom: 1px solid var(--nav-hover-bg-color);
+  margin-bottom: 4px;
+}

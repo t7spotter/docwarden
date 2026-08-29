@@ -24,6 +24,7 @@ dependencies = ["PyYAML>=6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "Django>=4.2"]
+browser = ["playwright>=1.40"]
 
 [project.scripts]
 apidocs = "apidocs_live.cli:main"
