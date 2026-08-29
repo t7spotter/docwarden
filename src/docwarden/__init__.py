@@ -7,4 +7,4 @@ include(), so the package imports cleanly with or without Django installed.
 
 __version__ = "0.1.0"
 
-default_app_config = "apidocs_live.apps.ApiDocsLiveConfig"
+default_app_config = "docwarden.apps.DocwardenConfig"

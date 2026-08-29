@@ -2,10 +2,10 @@ import json
 
 import pytest
 
-from apidocs_live.config import Config
-from apidocs_live.http import Request
-from apidocs_live.index import build_index
-from apidocs_live.router import Portal, handle
+from docwarden.config import Config
+from docwarden.http import Request
+from docwarden.index import build_index
+from docwarden.router import Portal, handle
 
 
 def get(portal, path, **query):
@@ -170,7 +170,7 @@ def test_only_get_head_and_post_are_accepted(portal):
 
 
 def test_a_broken_spec_still_renders_a_page(spec_copy):
-    from apidocs_live.loader import load_registry
+    from docwarden.loader import load_registry
 
     target = next(spec_copy.rglob("openapi.yaml"))
     target.write_text("openapi: 3.0.3\n bad: [\n")
@@ -195,7 +195,7 @@ def test_sse_stream_emits_the_current_revision(registry, sample_root):
 
 
 def test_head_and_cdn_renderer(registry, sample_root):
-    from apidocs_live.render import CDN_RAPIDOC
+    from docwarden.render import CDN_RAPIDOC
 
     portal = Portal(Config(root=sample_root, renderer="cdn"), registry)
     markup = get(portal, f"/{registry.names()[0]}/").body.decode()
@@ -218,7 +218,7 @@ def test_theme_is_pinned_when_configured(registry, sample_root):
 
 
 def test_build_portal_starts_and_stops_a_watcher(sample_root):
-    from apidocs_live.router import build_portal
+    from docwarden.router import build_portal
 
     portal = build_portal(Config(root=sample_root, watch=True))
     try:
@@ -237,7 +237,7 @@ def test_base_path_does_not_swallow_a_similar_prefix(registry, sample_root):
 def test_display_spec_escapes_pipes_in_extension_tables(registry, sample_root):
     # Extension values become markdown table cells; an unescaped pipe would
     # end the cell early and mangle the table.
-    from apidocs_live.render import display_spec
+    from docwarden.render import display_spec
 
     spec = registry.specs[registry.names()[0]]
     spec.data["x-test-block"] = {"pattern": "a|b|c", "multi": "one\ntwo"}
@@ -252,7 +252,7 @@ def test_display_spec_escapes_pipes_in_extension_tables(registry, sample_root):
 
 
 def test_display_spec_without_extensions_keeps_the_description(registry, sample_root):
-    from apidocs_live.render import display_spec
+    from docwarden.render import display_spec
 
     spec = registry.specs[registry.names()[0]]
     saved = {key: spec.data.pop(key) for key in list(spec.data) if key.startswith("x-")}
@@ -292,7 +292,7 @@ def test_pages_are_not_cached(portal, registry):
 
 
 def test_asset_urls_carry_the_version(portal, registry):
-    from apidocs_live import __version__
+    from docwarden import __version__
 
     for path in ("/", f"/{registry.names()[0]}/"):
         markup = get(portal, path).body.decode()

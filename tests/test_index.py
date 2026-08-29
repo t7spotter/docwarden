@@ -1,5 +1,5 @@
-from apidocs_live.check import check, summarize
-from apidocs_live.index import (
+from docwarden.check import check, summarize
+from docwarden.index import (
     api_summaries,
     build_index,
     conventions,
@@ -8,7 +8,7 @@ from apidocs_live.index import (
     schema_detail,
     search_operations,
 )
-from apidocs_live.loader import load_registry
+from docwarden.loader import load_registry
 
 REQUIRED_KEYS = {"id", "app", "method", "path", "summary", "tags", "auth", "request", "responses", "hash"}
 

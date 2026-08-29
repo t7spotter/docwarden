@@ -55,12 +55,12 @@ _PAGE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <link rel="stylesheet" href="{shell_css}">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128218;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128737;</text></svg>">
 </head>
 <body>
 <header class="topbar">{topbar}</header>
 <main class="main">{main}</main>
-<script>window.APIDOCS = {config};</script>
+<script>window.DOCWARDEN = {config};</script>
 <script src="{shell_js}"></script>
 </body>
 </html>
@@ -163,7 +163,7 @@ def _agent_box(config: Config) -> str:
   <p>Point an agent here once and it always reads current docs — nothing to re-share.</p>
   <pre><code>{{
   "mcpServers": {{
-    "apidocs": {{ "type": "http", "url": "&lt;origin&gt;{_e(mcp_url)}" }}
+    "docwarden": {{ "type": "http", "url": "&lt;origin&gt;{_e(mcp_url)}" }}
   }}
 }}</code></pre>
   <p>Or fetch it as plain data:</p>
@@ -193,7 +193,7 @@ _RAPIDOC = """<!doctype html>
      and is styled by this document, not by the shadow root. -->
 <link rel="stylesheet" href="{shell_css}">
 <link rel="stylesheet" href="{extra_css}">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128218;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128737;</text></svg>">
 <style>
   html, body {{ margin: 0; height: 100%; background: {bg}; }}
   rapi-doc {{ width: 100%; height: 100%; }}
@@ -234,7 +234,7 @@ _RAPIDOC = """<!doctype html>
 >
   <div slot="nav-logo" class="portal-nav">{nav}</div>
 </rapi-doc>
-<script>window.APIDOCS = {config};</script>
+<script>window.DOCWARDEN = {config};</script>
 <script src="{script}"></script>
 <script src="{shell_js}"></script>
 </body>

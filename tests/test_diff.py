@@ -12,12 +12,12 @@ import subprocess
 
 import pytest
 
-from apidocs_live import diff
-from apidocs_live.config import Config
-from apidocs_live.http import Request
-from apidocs_live.loader import load_registry
-from apidocs_live.mcp_http import handle_rpc
-from apidocs_live.router import Portal, handle
+from docwarden import diff
+from docwarden.config import Config
+from docwarden.http import Request
+from docwarden.loader import load_registry
+from docwarden.mcp_http import handle_rpc
+from docwarden.router import Portal, handle
 
 
 @pytest.fixture

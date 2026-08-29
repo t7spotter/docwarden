@@ -12,9 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from apidocs_live.config import Config
-from apidocs_live.loader import load_registry
-from apidocs_live.router import Portal
+from docwarden.config import Config
+from docwarden.loader import load_registry
+from docwarden.router import Portal
 
 SAMPLE_ROOT = Path(__file__).resolve().parent.parent / "api-docs"
 

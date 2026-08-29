@@ -21,7 +21,7 @@ from .index import api_summaries, conventions, operation_detail, schema_detail, 
 from .loader import Registry
 
 PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
-SERVER_NAME = "apidocs-live"
+SERVER_NAME = "docwarden"
 
 PARSE_ERROR = -32700
 INVALID_REQUEST = -32600

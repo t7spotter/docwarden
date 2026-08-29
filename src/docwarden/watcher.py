@@ -34,7 +34,7 @@ class Watcher:
     def start(self) -> None:
         if self._thread:
             return
-        self._thread = threading.Thread(target=self._run, name="apidocs-watch", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="docwarden-watch", daemon=True)
         self._thread.start()
 
     def stop(self) -> None:

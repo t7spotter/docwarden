@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from apidocs_live.loader import (
+from docwarden.loader import (
     discover_specs,
     load_registry,
     load_spec,

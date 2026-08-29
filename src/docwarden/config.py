@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-# Keys accepted from settings.APIDOCS_LIVE, apidocs.toml, or CLI flags.
+# Keys accepted from settings.DOCWARDEN, docwarden.toml, or CLI flags.
 _KEYS = (
     "root",
     "title",
@@ -69,25 +69,25 @@ class Config:
 def from_dict(values: dict[str, Any]) -> Config:
     unknown = set(values) - set(_KEYS)
     if unknown:
-        raise ValueError(f"unknown apidocs-live settings: {', '.join(sorted(unknown))}")
+        raise ValueError(f"unknown docwarden settings: {', '.join(sorted(unknown))}")
     return Config(**values)
 
 
 def from_toml(path: Path) -> Config:
-    """Read an apidocs.toml. Falls back to defaults when the file is absent."""
+    """Read an docwarden.toml. Falls back to defaults when the file is absent."""
     if not path.exists():
         return Config()
     import tomllib
 
     data = tomllib.loads(path.read_text(encoding="utf-8"))
-    section = data.get("apidocs", data)
+    section = data.get("docwarden", data)
     return from_dict({k: v for k, v in section.items() if k in _KEYS})
 
 
 def find_toml(start: Path) -> Path | None:
-    """Look for apidocs.toml beside the spec root, then in its parents."""
+    """Look for docwarden.toml beside the spec root, then in its parents."""
     for directory in (start, *start.parents):
-        candidate = directory / "apidocs.toml"
+        candidate = directory / "docwarden.toml"
         if candidate.exists():
             return candidate
         if (directory / ".git").exists():
@@ -96,4 +96,4 @@ def find_toml(start: Path) -> Path | None:
 
 
 def env_token() -> str | None:
-    return os.environ.get("APIDOCS_TOKEN") or None
+    return os.environ.get("DOCWARDEN_TOKEN") or None

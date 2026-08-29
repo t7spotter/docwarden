@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download the renderer bundle into src/apidocs_live/static/vendor/.
+"""Download the renderer bundle into src/docwarden/static/vendor/.
 
 Run once after cloning; the result is committed so the wheel is self-contained
 and the portal works with no network access.
@@ -16,7 +16,7 @@ from pathlib import Path
 RAPIDOC_VERSION = "9.3.8"
 RAPIDOC_URL = f"https://cdn.jsdelivr.net/npm/rapidoc@{RAPIDOC_VERSION}/dist/rapidoc-min.js"
 
-VENDOR_DIR = Path(__file__).resolve().parent.parent / "src" / "apidocs_live" / "static" / "vendor"
+VENDOR_DIR = Path(__file__).resolve().parent.parent / "src" / "docwarden" / "static" / "vendor"
 
 
 def main() -> int:

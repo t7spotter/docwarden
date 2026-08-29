@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "apidocs-live"
+name = "docwarden"
 version = "0.1.0"
-description = "Serve a directory of OpenAPI specs as a live docs portal for humans and AI agents"
+description = "Watches your OpenAPI specs and serves them live, for humans and AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-authors = [{name = "Backend Team", email = "firooziparse@gmail.com"}]
-keywords = ["openapi", "documentation", "django", "mcp", "swagger"]
+authors = [{name = "Mohamadali Firoozi", email = "firooziparse@gmail.com"}]
+keywords = ["openapi", "documentation", "django", "mcp", "swagger", "live-reload"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: Django",
@@ -27,13 +27,13 @@ dev = ["pytest>=8.0", "Django>=4.2"]
 browser = ["playwright>=1.40"]
 
 [project.scripts]
-apidocs = "apidocs_live.cli:main"
+docwarden = "docwarden.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/firooziparse/apidocs-live"
+Homepage = "https://github.com/firooziparse/docwarden"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/apidocs_live"]
+packages = ["src/docwarden"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

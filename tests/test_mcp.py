@@ -1,9 +1,9 @@
 import json
 
-from apidocs_live.http import Request
-from apidocs_live.index import build_index
-from apidocs_live.mcp_http import METHOD_NOT_FOUND, TOOLS, handle_rpc
-from apidocs_live.router import handle
+from docwarden.http import Request
+from docwarden.index import build_index
+from docwarden.mcp_http import METHOD_NOT_FOUND, TOOLS, handle_rpc
+from docwarden.router import handle
 
 
 def rpc(portal, method, params=None, message_id=1):

@@ -26,15 +26,15 @@ def django_project():
             SECRET_KEY="test-only",
             ROOT_URLCONF="tests.test_django",
             ALLOWED_HOSTS=["testserver"],
-            INSTALLED_APPS=["apidocs_live"],
-            APIDOCS_LIVE={"root": SAMPLE_ROOT, "title": "Mounted portal"},
+            INSTALLED_APPS=["docwarden"],
+            DOCWARDEN={"root": SAMPLE_ROOT, "title": "Mounted portal"},
             DATABASES={},
             USE_TZ=True,
         )
     django.setup()
     yield
 
-    from apidocs_live.views import reset_portal
+    from docwarden.views import reset_portal
 
     reset_portal()
 
@@ -42,7 +42,7 @@ def django_project():
 # ROOT_URLCONF points here: the mount is exactly what the README documents.
 from django.urls import include, path  # noqa: E402
 
-urlpatterns = [path("api-docs/", include("apidocs_live.urls"))]
+urlpatterns = [path("api-docs/", include("docwarden.urls"))]
 
 
 @pytest.fixture
@@ -101,10 +101,10 @@ def test_watch_defaults_to_debug():
     from django.conf import settings
     from django.test import override_settings
 
-    from apidocs_live.views import load_config
+    from docwarden.views import load_config
 
     assert load_config().watch is False
-    with override_settings(DEBUG=True, APIDOCS_LIVE={"root": SAMPLE_ROOT}):
+    with override_settings(DEBUG=True, DOCWARDEN={"root": SAMPLE_ROOT}):
         assert load_config().watch is True
     assert settings.DEBUG is False
 
@@ -112,9 +112,9 @@ def test_watch_defaults_to_debug():
 def test_token_setting_gates_the_mounted_portal(client):
     from django.test import override_settings
 
-    from apidocs_live.views import reset_portal
+    from docwarden.views import reset_portal
 
-    with override_settings(APIDOCS_LIVE={"root": SAMPLE_ROOT, "token": "hunter2"}):
+    with override_settings(DOCWARDEN={"root": SAMPLE_ROOT, "token": "hunter2"}):
         reset_portal()
         assert client.get("/api-docs/index.json").status_code == 401
         assert client.get("/api-docs/index.json?token=hunter2").status_code == 200
@@ -124,8 +124,8 @@ def test_token_setting_gates_the_mounted_portal(client):
 def test_unknown_setting_is_rejected_loudly():
     from django.test import override_settings
 
-    from apidocs_live.views import load_config
+    from docwarden.views import load_config
 
-    with override_settings(APIDOCS_LIVE={"root": SAMPLE_ROOT, "colour": "blue"}):
+    with override_settings(DOCWARDEN={"root": SAMPLE_ROOT, "colour": "blue"}):
         with pytest.raises(ValueError, match="colour"):
             load_config()

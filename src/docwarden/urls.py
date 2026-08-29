@@ -1,6 +1,6 @@
 """Django URLConf.
 
-    urlpatterns += [path("api-docs/", include("apidocs_live.urls"))]
+    urlpatterns += [path("api-docs/", include("docwarden.urls"))]
 
 Everything below the mount point is handled by one view, so the portal serves
 the same routes here as it does standalone — including its own static assets,
@@ -13,7 +13,7 @@ from django.urls import re_path
 
 from .views import docs
 
-app_name = "apidocs_live"
+app_name = "docwarden"
 
 urlpatterns = [
     re_path(r"^(?P<path>.*)$", docs, name="docs"),

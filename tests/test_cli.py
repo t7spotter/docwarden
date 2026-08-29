@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from apidocs_live.cli import main
-from apidocs_live.config import Config, find_toml, from_dict, from_toml
-from apidocs_live.loader import load_registry
-from apidocs_live.watcher import Watcher
+from docwarden.cli import main
+from docwarden.config import Config, find_toml, from_dict, from_toml
+from docwarden.loader import load_registry
+from docwarden.watcher import Watcher
 
 
 def test_check_passes_on_the_sample(sample_root, capsys):
@@ -76,8 +76,8 @@ def test_build_replaces_a_previous_output(sample_root, tmp_path, capsys):
 
 
 def test_serve_answers_over_http(sample_root, capsys):
-    from apidocs_live.router import build_portal
-    from apidocs_live.server import serve
+    from docwarden.router import build_portal
+    from docwarden.server import serve
 
     config = Config(root=sample_root, title="Served", watch=False)
     portal = build_portal(config)
@@ -163,8 +163,8 @@ def test_config_url_honours_base_path():
 
 
 def test_toml_config_is_read(tmp_path: Path):
-    (tmp_path / "apidocs.toml").write_text('[apidocs]\ntitle = "From toml"\nrenderer = "cdn"\n')
-    config = from_toml(tmp_path / "apidocs.toml")
+    (tmp_path / "docwarden.toml").write_text('[docwarden]\ntitle = "From toml"\nrenderer = "cdn"\n')
+    config = from_toml(tmp_path / "docwarden.toml")
     assert config.title == "From toml" and config.renderer == "cdn"
 
 
@@ -173,16 +173,16 @@ def test_missing_toml_gives_defaults(tmp_path: Path):
 
 
 def test_find_toml_looks_upwards(tmp_path: Path):
-    (tmp_path / "apidocs.toml").write_text("[apidocs]\n")
+    (tmp_path / "docwarden.toml").write_text("[docwarden]\n")
     nested = tmp_path / "a" / "b"
     nested.mkdir(parents=True)
-    assert find_toml(nested) == tmp_path / "apidocs.toml"
+    assert find_toml(nested) == tmp_path / "docwarden.toml"
 
 
 def test_serve_prints_a_summary_and_any_errors(spec_copy, capsys, monkeypatch):
     next(spec_copy.rglob("openapi.yaml")).write_text("openapi: 3.0.3\n bad: [\n")
     started = {}
-    monkeypatch.setattr("apidocs_live.server.serve", lambda portal, host, port: started.update(host=host, port=port))
+    monkeypatch.setattr("docwarden.server.serve", lambda portal, host, port: started.update(host=host, port=port))
 
     assert main(["serve", str(spec_copy), "--port", "9999", "--no-watch"]) == 0
 
@@ -193,13 +193,13 @@ def test_serve_prints_a_summary_and_any_errors(spec_copy, capsys, monkeypatch):
 
 
 def test_serve_reports_watching(sample_root, capsys, monkeypatch):
-    monkeypatch.setattr("apidocs_live.server.serve", lambda *a, **k: None)
+    monkeypatch.setattr("docwarden.server.serve", lambda *a, **k: None)
     main(["serve", str(sample_root)])
     assert "watching for changes" in capsys.readouterr().out
 
 
 def test_title_defaults_to_the_project_directory(sample_root, capsys, monkeypatch):
-    monkeypatch.setattr("apidocs_live.server.serve", lambda *a, **k: None)
+    monkeypatch.setattr("docwarden.server.serve", lambda *a, **k: None)
     main(["serve", str(sample_root)])
     assert sample_root.resolve().parent.name in capsys.readouterr().out
 
@@ -214,7 +214,7 @@ def test_mcp_subcommand_speaks_jsonrpc_over_stdio(sample_root):
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
     ]
     completed = subprocess.run(
-        [sys.executable, "-m", "apidocs_live.cli", "mcp", str(sample_root)],
+        [sys.executable, "-m", "docwarden.cli", "mcp", str(sample_root)],
         input="\n".join(json.dumps(m) for m in messages),
         capture_output=True,
         text=True,
@@ -230,7 +230,7 @@ def test_mcp_subcommand_speaks_jsonrpc_over_stdio(sample_root):
 def test_stdio_reports_malformed_json_without_dying(sample_root):
     import io
 
-    from apidocs_live.mcp_stdio import run
+    from docwarden.mcp_stdio import run
 
     out = io.StringIO()
     run(Config(root=sample_root), stdin=io.StringIO('{bad\n\n{"jsonrpc":"2.0","id":1,"method":"ping"}\n'), stdout=out)
@@ -241,8 +241,8 @@ def test_stdio_reports_malformed_json_without_dying(sample_root):
 
 
 def _spawn(config, port):
-    from apidocs_live.router import build_portal
-    from apidocs_live.server import serve
+    from docwarden.router import build_portal
+    from docwarden.server import serve
 
     portal = build_portal(config)
     thread = threading.Thread(target=serve, args=(portal, "127.0.0.1", port), daemon=True)
@@ -274,7 +274,7 @@ def test_server_streams_sse_and_answers_head(sample_root):
 def test_server_answers_500_when_a_handler_raises(sample_root, monkeypatch):
     import urllib.error
 
-    monkeypatch.setattr("apidocs_live.server.handle", _boom)
+    monkeypatch.setattr("docwarden.server.handle", _boom)
     _spawn(Config(root=sample_root, watch=False), 8482)
 
     with pytest.raises(urllib.error.HTTPError) as raised:
@@ -289,8 +289,8 @@ def _boom(request, portal):
 def test_binding_a_busy_port_fails_clearly(sample_root):
     import socket
 
-    from apidocs_live.router import build_portal
-    from apidocs_live.server import serve
+    from docwarden.router import build_portal
+    from docwarden.server import serve
 
     holder = socket.socket()
     holder.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
