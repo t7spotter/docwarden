@@ -77,6 +77,10 @@ def from_toml(path: Path) -> Config:
     """Read an apiwarden.toml. Falls back to defaults when the file is absent."""
     if not path.exists():
         return Config()
+
+    # tomllib is stdlib from 3.11, which is why requires-python is >=3.11:
+    # keeping 3.10 would mean depending on the tomli backport, and PyYAML
+    # being the only dependency is worth more than a version at end of life.
     import tomllib
 
     data = tomllib.loads(path.read_text(encoding="utf-8"))
