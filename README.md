@@ -72,8 +72,17 @@ apiwarden changes ./api-docs --since v1.4.0
 apiwarden snapshot ./api-docs -o baseline.json
 ```
 
-`serve` watches the spec files and pushes a reload to open browsers, so editing
-a spec updates the page without a restart.
+`serve` takes a directory, a port, or both, in either order — a bare number is
+read as a port, so the common case of "same specs, different port" is short:
+
+```
+apiwarden serve 8081                    # default directory, port 8081
+apiwarden serve ./api-docs 8081         # both
+apiwarden serve ./api-docs --port 8081  # the explicit form, still fine
+```
+
+It watches the spec files and pushes a reload to open browsers, so editing a
+spec updates the page without a restart.
 
 ## What changed
 

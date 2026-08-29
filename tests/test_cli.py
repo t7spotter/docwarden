@@ -333,3 +333,92 @@ def test_changes_without_a_baseline_explains_itself(spec_copy, capsys):
 def test_changes_with_an_unreadable_baseline(spec_copy, capsys):
     assert main(["changes", str(spec_copy), "--since", "no-such-revision-xyz"]) == 1
     assert "cannot read the baseline" in capsys.readouterr().err
+
+
+# --------------------------------------------------------------- serve targets
+
+
+def _serve_args(targets, port=None):
+    """Resolve `serve`'s positionals the way main() does, without starting one."""
+    from apiwarden.cli import _resolve_serve_targets
+
+    class Args:
+        pass
+
+    args = Args()
+    args.targets = list(targets)
+    args.port = port
+    return args, _resolve_serve_targets(args)
+
+
+def test_a_bare_number_is_read_as_a_port(sample_root):
+    # `apiwarden serve 8081` should mean the port. Reading it as a spec
+    # directory leaves the server on the default port, which is the one the
+    # user was trying to move off.
+    args, code = _serve_args(["8081"])
+    assert code == 0
+    assert args.port == 8081
+    assert args.root == "api-docs"
+
+
+def test_a_path_is_still_read_as_the_root(sample_root):
+    args, code = _serve_args([str(sample_root)])
+    assert code == 0
+    assert args.root == str(sample_root)
+    assert args.port == 8080
+
+
+def test_a_root_and_a_port_together_in_either_order(sample_root):
+    for targets in ([str(sample_root), "8081"], ["8081", str(sample_root)]):
+        args, code = _serve_args(targets)
+        assert code == 0
+        assert args.root == str(sample_root)
+        assert args.port == 8081
+
+
+def test_no_targets_uses_both_defaults():
+    args, code = _serve_args([])
+    assert (code, args.root, args.port) == (0, "api-docs", 8080)
+
+
+def test_an_explicit_port_flag_still_works(sample_root):
+    args, code = _serve_args([str(sample_root)], port=9000)
+    assert code == 0
+    assert args.port == 9000
+
+
+def test_a_directory_named_like_a_port_wins(tmp_path, monkeypatch):
+    # Someone with a directory called "8081" has no other way to name it, so
+    # an existing directory beats the port reading.
+    (tmp_path / "8081").mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    args, code = _serve_args(["8081"])
+    assert code == 0
+    assert args.root == "8081"
+    assert args.port == 8080
+
+
+def test_conflicting_targets_are_refused(sample_root, capsys):
+    for targets, port in (
+        (["8081", "9090"], None),          # two ports
+        (["one", "two"], None),            # two directories
+        (["8081"], 9000),                  # positional port vs --port
+    ):
+        _, code = _serve_args(targets, port)
+        assert code == 1, f"{targets} {port} should have been refused"
+    assert capsys.readouterr().err
+
+
+def test_a_port_matching_the_flag_is_not_a_conflict():
+    args, code = _serve_args(["8081"], port=8081)
+    assert code == 0 and args.port == 8081
+
+
+def test_out_of_range_numbers_are_treated_as_paths():
+    # 0 and 70000 are not ports, so they can only have been meant as a path.
+    for value in ("0", "70000"):
+        args, code = _serve_args([value])
+        assert code == 0
+        assert args.root == value
+        assert args.port == 8080

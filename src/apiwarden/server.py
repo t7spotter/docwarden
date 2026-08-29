@@ -7,6 +7,7 @@ production.
 
 from __future__ import annotations
 
+import errno
 import socket
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -100,10 +101,13 @@ def serve(portal: Portal, host: str = "127.0.0.1", port: int = 8080) -> None:
     try:
         server = _Server((host, port), handler)
     except OSError as exc:
-        raise SystemExit(f"cannot bind {host}:{port} — {exc}") from exc
+        hint = ""
+        if getattr(exc, "errno", None) in (errno.EADDRINUSE, errno.EACCES):
+            hint = f"\n  something else is on that port — try: apiwarden serve {port + 1}"
+        raise SystemExit(f"cannot bind {host}:{port} — {exc}{hint}") from exc
 
     shown = host if host not in ("0.0.0.0", "::") else socket.gethostname()
-    print(f"  http://{shown}:{port}{portal.config.base_path}/")
+    print(f"  http://{shown}:{port}{portal.config.base_path}/", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
