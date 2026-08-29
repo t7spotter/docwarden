@@ -1,0 +1,9 @@
+# Registers every spec in this demo doc set. apiwarden reads this the same
+# way it would read a real project's registry file, honouring the names and
+# order declared here rather than guessing from the directory layout.
+
+apis:
+  tasks:
+    root: apps/tasks/openapi.yaml
+  users:
+    root: apps/users/openapi.yaml

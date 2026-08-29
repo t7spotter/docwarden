@@ -1,0 +1,179 @@
+openapi: 3.0.3
+
+info:
+  title: Tasks API
+  description: |
+    Create, read and remove tasks. This is a small demo API, shipped as
+    apiwarden's own fixture — used by the test suite and by `apiwarden serve`
+    as a working example when you don't have your own specs handy yet.
+
+    ## Flow
+    1. `POST /tasks/` creates a task and returns it with a generated id.
+    2. `GET /tasks/{task_id}/` reads one task back.
+    3. `DELETE /tasks/{task_id}/` removes it.
+
+    ## Conventions
+    - Every request needs `Authorization: Bearer <token>` except where noted.
+    - `X-Client-Version` is required on every call in this API, declared once
+      on the path rather than repeated per operation.
+  version: "1.0.0"
+  contact:
+    name: apiwarden
+    email: t7spotter@gmail.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: Tasks
+    description: Create and track tasks.
+
+x-rate-limits:
+  # A vendor extension block, the kind of thing a plain OpenAPI renderer
+  # drops on the floor and apiwarden surfaces in the "Limits & specs" panel.
+  create_task: 10/min per user
+  list_tasks: 60/min per user
+
+paths:
+  /tasks/:
+    parameters:
+      - name: X-Client-Version
+        in: header
+        required: true
+        schema: {type: string, example: "1.4.0"}
+    get:
+      tags: [Tasks]
+      summary: List every task.
+      operationId: listTasks
+      security: [{bearerAuth: []}]
+      description: Returns every task belonging to the caller.
+      responses:
+        '200':
+          description: The task list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Task'}
+              examples:
+                default:
+                  value:
+                    - {id: "a1111111-1111-4111-8111-111111111111", title: "Write the docs", done: false, priority: "high"}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Tasks]
+      summary: Create a task.
+      operationId: createTask
+      security: [{bearerAuth: []}]
+      description: Creates a task owned by the caller.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TaskCreate'}
+            examples:
+              default:
+                value: {title: "Write the docs", priority: "high"}
+      responses:
+        '201':
+          description: The created task.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Task'}
+        '400':
+          description: A field failed validation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ValidationError'}
+              examples:
+                missingTitle:
+                  value: {title: ["This field is required."]}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks/{task_id}/:
+    parameters:
+      - name: X-Client-Version
+        in: header
+        required: true
+        schema: {type: string, example: "1.4.0"}
+      - name: task_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      tags: [Tasks]
+      summary: Read one task.
+      operationId: getTask
+      security: [{bearerAuth: []}]
+      description: Returns one task, scoped to the caller.
+      responses:
+        '200':
+          description: The task.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Task'}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Tasks]
+      summary: Remove a task.
+      operationId: deleteTask
+      security: [{bearerAuth: []}]
+      description: Idempotent — removing an already-gone task still returns 204.
+      responses:
+        '204':
+          description: The task is gone.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  responses:
+    Unauthorized:
+      description: No credentials, or an invalid token.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/DetailMessage'}
+    NotFound:
+      description: No task with that id belonging to the caller.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/DetailMessage'}
+
+  schemas:
+    DetailMessage:
+      type: object
+      properties:
+        detail: {type: string}
+
+    ValidationError:
+      type: object
+      additionalProperties:
+        type: array
+        items: {type: string}
+
+    Task:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        title: {type: string}
+        done: {type: boolean}
+        priority: {type: string, enum: [low, medium, high]}
+
+    TaskCreate:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, maxLength: 200}
+        priority: {type: string, enum: [low, medium, high], default: medium}

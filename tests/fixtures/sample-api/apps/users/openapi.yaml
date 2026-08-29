@@ -1,0 +1,69 @@
+openapi: 3.0.3
+
+info:
+  title: Users API
+  description: |
+    Public profile lookup. The other half of apiwarden's own demo doc set,
+    alongside the Tasks API — two specs, so the portal has something to
+    switch between and search across.
+
+    ## Notes
+    - Every endpoint here is public; there is nothing to authenticate.
+    - Profiles are read-only through this API.
+  version: "1.0.0"
+  contact:
+    name: apiwarden
+    email: t7spotter@gmail.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: Users
+    description: Look up a public profile.
+
+paths:
+  /users/{username}/:
+    get:
+      tags: [Users]
+      summary: Read a public profile.
+      operationId: getUser
+      description: Public — no authentication.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema: {type: string, example: "ada"}
+      responses:
+        '200':
+          description: The profile.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserProfile'}
+              examples:
+                default:
+                  value: {username: "ada", display_name: "Ada Lovelace", joined: "2024-01-15"}
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  responses:
+    NotFound:
+      description: No user with that username.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/DetailMessage'}
+
+  schemas:
+    DetailMessage:
+      type: object
+      properties:
+        detail: {type: string}
+
+    UserProfile:
+      type: object
+      properties:
+        username: {type: string}
+        display_name: {type: string}
+        joined: {type: string, format: date}

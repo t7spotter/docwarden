@@ -1,9 +1,15 @@
 """Shared fixtures.
 
-The sample doc set in api-docs/ is the fixture: exercising the real thing keeps
-the tests honest about what a hand-written multi-spec doc set looks like. Tests
-assert on structure, never on the sample's subject matter, so replacing the
-sample does not break them.
+tests/fixtures/sample-api/ is a small, generic doc set that this repo owns
+outright — two specs, deliberately unrelated to any real project, built to
+exercise every shape the tests need (a shared path-level parameter, a vendor
+extension block, $ref'd shared responses, typed response fields). Tests
+assert on structure, never on its subject matter, so replacing it later does
+not break them.
+
+This is NOT the same thing as a real project's api-docs/ directory, which is
+someone's own data and must never be committed here — see the
+sample-specs-are-not-the-product memory for why that distinction matters.
 """
 
 from __future__ import annotations
@@ -16,7 +22,7 @@ from apiwarden.config import Config
 from apiwarden.loader import load_registry
 from apiwarden.router import Portal
 
-SAMPLE_ROOT = Path(__file__).resolve().parent.parent / "api-docs"
+SAMPLE_ROOT = Path(__file__).resolve().parent / "fixtures" / "sample-api"
 
 
 @pytest.fixture

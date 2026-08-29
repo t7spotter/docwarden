@@ -17,7 +17,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev,browser]"
       - run: python -m playwright install --with-deps chromium
-      - run: apiwarden check api-docs
+      - run: apiwarden check tests/fixtures/sample-api
       - run: pytest -q
 
   build:
