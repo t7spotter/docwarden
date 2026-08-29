@@ -6,7 +6,7 @@
    watching the page reload underneath them. */
 
 (function () {
-  var config = window.DOCWARDEN || {};
+  var config = window.APIWARDEN || {};
   var base = config.base || "";
 
   function url(path) {

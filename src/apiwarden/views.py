@@ -42,8 +42,8 @@ def reset_portal() -> None:
 
 
 def load_config() -> Config:
-    """Read settings.DOCWARDEN, filling in Django-aware defaults."""
-    values = dict(getattr(settings, "DOCWARDEN", {}) or {})
+    """Read settings.APIWARDEN, filling in Django-aware defaults."""
+    values = dict(getattr(settings, "APIWARDEN", {}) or {})
     values.setdefault("root", _default_root())
     values.setdefault("title", "API Documentation")
     # Live reload holds an SSE connection open, which pins a sync worker; only

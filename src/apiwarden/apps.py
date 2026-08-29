@@ -9,10 +9,10 @@ from __future__ import annotations
 from django.apps import AppConfig
 
 
-class DocwardenConfig(AppConfig):
-    name = "docwarden"
-    label = "docwarden"
-    verbose_name = "Docwarden"
+class ApiwardenConfig(AppConfig):
+    name = "apiwarden"
+    label = "apiwarden"
+    verbose_name = "Apiwarden"
 
     def ready(self) -> None:
         # Load the specs once at startup so the first request is not the one

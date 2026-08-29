@@ -23,9 +23,9 @@ import pytest
 
 sync_playwright = pytest.importorskip("playwright.sync_api").sync_playwright
 
-from docwarden.config import Config
-from docwarden.router import build_portal
-from docwarden.server import serve
+from apiwarden.config import Config
+from apiwarden.router import build_portal
+from apiwarden.server import serve
 
 LAUNCH = ["--no-sandbox", "--disable-dev-shm-usage"]
 
@@ -123,7 +123,7 @@ def test_cross_spec_search_finds_other_apis(page, live):
     page.goto(f"{base}/{names[0]}/", wait_until="load")
     page.wait_for_timeout(2000)
 
-    from docwarden.index import build_index
+    from apiwarden.index import build_index
 
     target = next(e for e in build_index(portal.registry) if e["app"] != names[0])
     page.fill("#search-input", target["id"])
@@ -136,7 +136,7 @@ def test_cross_spec_search_finds_other_apis(page, live):
 
 def test_deep_link_scrolls_to_an_operation(page, live):
     base, _, portal = live
-    from docwarden.index import build_index
+    from apiwarden.index import build_index
 
     app = _first_app(portal)
     entry = next(e for e in build_index(portal.registry) if e["app"] == app)

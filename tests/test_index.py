@@ -1,5 +1,5 @@
-from docwarden.check import check, summarize
-from docwarden.index import (
+from apiwarden.check import check, summarize
+from apiwarden.index import (
     api_summaries,
     build_index,
     conventions,
@@ -8,7 +8,7 @@ from docwarden.index import (
     schema_detail,
     search_operations,
 )
-from docwarden.loader import load_registry
+from apiwarden.loader import load_registry
 
 REQUIRED_KEYS = {"id", "app", "method", "path", "summary", "tags", "auth", "request", "responses", "hash"}
 

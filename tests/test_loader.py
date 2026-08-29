@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from docwarden.loader import (
+from apiwarden.loader import (
     discover_specs,
     load_registry,
     load_spec,

@@ -1,6 +1,6 @@
 """MCP over stdio, for an agent running on the same machine.
 
-    docwarden mcp ./api-docs
+    apiwarden mcp ./api-docs
 
 The stdio transport is newline-delimited JSON-RPC, so this is framing around
 the same handle_rpc() the HTTP endpoint uses: one definition of what an agent

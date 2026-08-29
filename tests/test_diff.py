@@ -12,12 +12,12 @@ import subprocess
 
 import pytest
 
-from docwarden import diff
-from docwarden.config import Config
-from docwarden.http import Request
-from docwarden.loader import load_registry
-from docwarden.mcp_http import handle_rpc
-from docwarden.router import Portal, handle
+from apiwarden import diff
+from apiwarden.config import Config
+from apiwarden.http import Request
+from apiwarden.loader import load_registry
+from apiwarden.mcp_http import handle_rpc
+from apiwarden.router import Portal, handle
 
 
 @pytest.fixture

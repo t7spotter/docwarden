@@ -1,4 +1,4 @@
-"""Standalone server for `docwarden serve`.
+"""Standalone server for `apiwarden serve`.
 
 A threading HTTP server from the standard library — enough for a docs portal a
 team reads, with no framework dependency. Django hosts the same handler in

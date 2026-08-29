@@ -1,4 +1,4 @@
-# docwarden
+# apiwarden
 
 Point it at a directory of OpenAPI specs and it serves them as live
 documentation — a browsable site for people, and an MCP server plus plain JSON
@@ -8,8 +8,8 @@ disk on every request, so whatever is on the branch is what the docs say.
 Runs standalone, or mounts into an existing Django project in two lines.
 
 ```
-pip install docwarden
-docwarden serve ./api-docs
+pip install apiwarden
+apiwarden serve ./api-docs
 ```
 
 ## Why
@@ -51,7 +51,7 @@ Point an agent at the MCP endpoint once and it never reads a stale spec again:
 ```json
 {
   "mcpServers": {
-    "docwarden": { "type": "http", "url": "https://your-host/api-docs/mcp" }
+    "apiwarden": { "type": "http", "url": "https://your-host/api-docs/mcp" }
   }
 }
 ```
@@ -59,17 +59,17 @@ Point an agent at the MCP endpoint once and it never reads a stale spec again:
 Locally, over stdio instead:
 
 ```
-docwarden mcp ./api-docs
+apiwarden mcp ./api-docs
 ```
 
 ## Standalone
 
 ```
-docwarden serve ./api-docs              # http://127.0.0.1:8080, reloads as you edit
-docwarden check ./api-docs              # lint: operationIds, summaries, unresolved $refs
-docwarden build ./api-docs -o dist/     # self-contained static copy, for CI publishing
-docwarden changes ./api-docs --since v1.4.0
-docwarden snapshot ./api-docs -o baseline.json
+apiwarden serve ./api-docs              # http://127.0.0.1:8080, reloads as you edit
+apiwarden check ./api-docs              # lint: operationIds, summaries, unresolved $refs
+apiwarden build ./api-docs -o dist/     # self-contained static copy, for CI publishing
+apiwarden changes ./api-docs --since v1.4.0
+apiwarden snapshot ./api-docs -o baseline.json
 ```
 
 `serve` watches the spec files and pushes a reload to open browsers, so editing
@@ -82,7 +82,7 @@ moved. `changes` compares the specs against a baseline and sorts the result by
 what it does to a caller:
 
 ```
-$ docwarden changes ./api-docs --since v1.4.0
+$ apiwarden changes ./api-docs --since v1.4.0
 breaking  accounts POST /v1/accounts/otp/     field-added: request.device_id (required)
 breaking  accounts POST /v1/accounts/otp/     response-removed: 429 no longer documented
 info      accounts POST /v1/accounts/otp/     summary-changed: Send a one-time login code.
@@ -93,7 +93,7 @@ since v1.4.0: 2 breaking, 0 additive, 1 informational
 parameter, a type change, an enum value being removed, or authentication being
 added. **Additive** is anything a current caller can ignore. The baseline is a
 git revision of the spec directory, or a snapshot file written earlier with
-`docwarden snapshot`. `--fail-on-breaking` exits non-zero, so CI can gate on it.
+`apiwarden snapshot`. `--fail-on-breaking` exits non-zero, so CI can gate on it.
 
 The same comparison is on the `/changes` page and the `list_changes` MCP tool,
 so an agent can answer "will this break my client?" directly.
@@ -102,18 +102,18 @@ so an agent can answer "will this break my client?" directly.
 
 ```python
 # settings.py
-INSTALLED_APPS += ["docwarden"]
+INSTALLED_APPS += ["apiwarden"]
 
-DOCWARDEN = {
+APIWARDEN = {
     "root": BASE_DIR / "api-docs",
     "title": "Platform API",
     "servers": ["https://api.example.com"],   # what try-it should call
     "watch": DEBUG,
-    "token": os.environ.get("DOCWARDEN_TOKEN"), # omit for a public portal
+    "token": os.environ.get("APIWARDEN_TOKEN"), # omit for a public portal
 }
 
 # urls.py
-urlpatterns += [path("api-docs/", include("docwarden.urls"))]
+urlpatterns += [path("api-docs/", include("apiwarden.urls"))]
 ```
 
 That is the whole integration. The portal serves its own assets, so there is no
@@ -130,7 +130,7 @@ Two production notes:
 
 ## Configuration
 
-Settings are the same for both, via `DOCWARDEN`, an `docwarden.toml` beside the
+Settings are the same for both, via `APIWARDEN`, an `apiwarden.toml` beside the
 specs, or CLI flags.
 
 | Key | Default | Meaning |
@@ -141,7 +141,7 @@ specs, or CLI flags.
 | `renderer` | `vendor` | `vendor` serves the bundled RapiDoc, `cdn` loads it remotely |
 | `theme` | `auto` | `auto` follows the reader's OS setting; `light`/`dark` pin it |
 | `watch` | `False` | Reload when the spec files change |
-| `token` | `None` | Require a shared token on every request (also `DOCWARDEN_TOKEN`) |
+| `token` | `None` | Require a shared token on every request (also `APIWARDEN_TOKEN`) |
 | `sources` | discovered | Explicit `{name: path}` map |
 
 ## How specs are discovered
@@ -168,7 +168,7 @@ pytest tests/test_browser.py
 ```
 
 `api-docs/` in this repository is a sample doc set used by the tests and by
-`docwarden serve` when you try things out.
+`apiwarden serve` when you try things out.
 
 ## License
 

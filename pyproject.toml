@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "docwarden"
+name = "apiwarden"
 version = "0.1.0"
 description = "Watches your OpenAPI specs and serves them live, for humans and AI agents"
 readme = "README.md"
@@ -27,13 +27,13 @@ dev = ["pytest>=8.0", "Django>=4.2"]
 browser = ["playwright>=1.40"]
 
 [project.scripts]
-docwarden = "docwarden.cli:main"
+apiwarden = "apiwarden.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/t7spotter/docwarden"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/docwarden"]
+packages = ["src/apiwarden"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

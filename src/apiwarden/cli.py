@@ -1,4 +1,4 @@
-"""`docwarden` — serve, check, build, and the stdio MCP server."""
+"""`apiwarden` — serve, check, build, and the stdio MCP server."""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from .loader import load_registry
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="docwarden",
+        prog="apiwarden",
         description="Serve a directory of OpenAPI specs as live documentation for humans and AI agents.",
     )
-    parser.add_argument("--version", action="version", version=f"docwarden {__version__}")
+    parser.add_argument("--version", action="version", version=f"apiwarden {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     serve = sub.add_parser("serve", help="run the live docs portal")
@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
 
     snapshot = sub.add_parser("snapshot", help="write a baseline to diff against later")
     _common(snapshot)
-    snapshot.add_argument("-o", "--output", default="docwarden-snapshot.json")
+    snapshot.add_argument("-o", "--output", default="apiwarden-snapshot.json")
 
     changes = sub.add_parser("changes", help="show what changed since a baseline")
     _common(changes)

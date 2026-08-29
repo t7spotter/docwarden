@@ -60,7 +60,7 @@ _PAGE = """<!doctype html>
 <body>
 <header class="topbar">{topbar}</header>
 <main class="main">{main}</main>
-<script>window.DOCWARDEN = {config};</script>
+<script>window.APIWARDEN = {config};</script>
 <script src="{shell_js}"></script>
 </body>
 </html>
@@ -163,7 +163,7 @@ def _agent_box(config: Config) -> str:
   <p>Point an agent here once and it always reads current docs — nothing to re-share.</p>
   <pre><code>{{
   "mcpServers": {{
-    "docwarden": {{ "type": "http", "url": "&lt;origin&gt;{_e(mcp_url)}" }}
+    "apiwarden": {{ "type": "http", "url": "&lt;origin&gt;{_e(mcp_url)}" }}
   }}
 }}</code></pre>
   <p>Or fetch it as plain data:</p>
@@ -234,7 +234,7 @@ _RAPIDOC = """<!doctype html>
 >
   <div slot="nav-logo" class="portal-nav">{nav}</div>
 </rapi-doc>
-<script>window.DOCWARDEN = {config};</script>
+<script>window.APIWARDEN = {config};</script>
 <script src="{script}"></script>
 <script src="{shell_js}"></script>
 </body>
