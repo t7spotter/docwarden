@@ -54,14 +54,14 @@ _PAGE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
-<link rel="stylesheet" href="{static}/shell.css">
+<link rel="stylesheet" href="{shell_css}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128218;</text></svg>">
 </head>
 <body>
 <header class="topbar">{topbar}</header>
 <main class="main">{main}</main>
 <script>window.APIDOCS = {config};</script>
-<script src="{static}/shell.js"></script>
+<script src="{shell_js}"></script>
 </body>
 </html>
 """
@@ -81,7 +81,8 @@ def page(config: Config, registry: Registry, title: str, main: str, active: str 
     }
     return _PAGE.format(
         title=_e(title),
-        static=_e(config.url("_static")),
+        shell_css=_e(config.asset("shell.css")),
+        shell_js=_e(config.asset("shell.js")),
         topbar=_topbar(config, registry, active),
         main=main,
         config=json.dumps(payload),
@@ -190,8 +191,8 @@ _RAPIDOC = """<!doctype html>
 <title>{title}</title>
 <!-- shell.css styles the nav-logo slot: slotted content stays in the light DOM
      and is styled by this document, not by the shadow root. -->
-<link rel="stylesheet" href="{static}/shell.css">
-<link rel="stylesheet" href="{static}/rapidoc-extra.css">
+<link rel="stylesheet" href="{shell_css}">
+<link rel="stylesheet" href="{extra_css}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#128218;</text></svg>">
 <style>
   html, body {{ margin: 0; height: 100%; background: {bg}; }}
@@ -235,7 +236,7 @@ _RAPIDOC = """<!doctype html>
 </rapi-doc>
 <script>window.APIDOCS = {config};</script>
 <script src="{script}"></script>
-<script src="{static}/shell.js"></script>
+<script src="{shell_js}"></script>
 </body>
 </html>
 """
@@ -251,7 +252,7 @@ def api_page(config: Config, registry: Registry, spec: Spec) -> str:
     # on load, so there is no flash for a reader who pinned a theme.
     theme_name = "dark" if config.theme == "dark" else "light"
     palette = dict(THEMES[theme_name], theme=theme_name)
-    script = CDN_RAPIDOC if config.renderer == "cdn" else config.url("_static/vendor/rapidoc.js")
+    script = CDN_RAPIDOC if config.renderer == "cdn" else config.asset("vendor/rapidoc.js")
 
     payload = {
         "base": config.base_path,
@@ -264,7 +265,9 @@ def api_page(config: Config, registry: Registry, spec: Spec) -> str:
 
     return _RAPIDOC.format(
         title=_e(f"{spec.title} · {config.title}"),
-        static=_e(config.url("_static")),
+        shell_css=_e(config.asset("shell.css")),
+        shell_js=_e(config.asset("shell.js")),
+        extra_css=_e(config.asset("rapidoc-extra.css")),
         script=_e(script),
         nav=_portal_nav(config, registry, spec.name),
         config=json.dumps(payload),

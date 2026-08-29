@@ -262,3 +262,39 @@ def test_display_spec_without_extensions_keeps_the_description(registry, sample_
         assert "Limits & specifications" not in document["info"]["description"]
     finally:
         spec.data.update(saved)
+
+
+def test_static_assets_revalidate_rather_than_being_pinned(portal):
+    # A long max-age here means an open browser keeps running old JavaScript
+    # after the package is updated, which is how a live docs portal goes stale.
+    response = get(portal, "/_static/shell.js")
+    assert response.status == 200
+    assert response.headers["Cache-Control"] == "no-cache"
+    assert response.headers["ETag"]
+
+
+def test_static_assets_answer_304_to_a_matching_etag(portal):
+    first = get(portal, "/_static/shell.js")
+    again = handle(
+        Request("GET", "/_static/shell.js", headers={"if-none-match": first.headers["ETag"]}), portal
+    )
+    assert again.status == 304
+    assert again.body == b""
+
+
+def test_static_assets_ignore_a_cache_busting_query(portal):
+    assert get(portal, "/_static/shell.js", v="9.9.9").status == 200
+
+
+def test_pages_are_not_cached(portal, registry):
+    for path in ("/", f"/{registry.names()[0]}/", "/changes"):
+        assert get(portal, path).headers["Cache-Control"] == "no-cache"
+
+
+def test_asset_urls_carry_the_version(portal, registry):
+    from apidocs_live import __version__
+
+    for path in ("/", f"/{registry.names()[0]}/"):
+        markup = get(portal, path).body.decode()
+        assert f"shell.js?v={__version__}" in markup
+        assert f"shell.css?v={__version__}" in markup

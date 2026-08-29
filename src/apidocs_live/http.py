@@ -47,7 +47,9 @@ class Response:
 def html(markup: str, status: int = 200) -> Response:
     return Response(
         status=status,
-        headers={"Content-Type": "text/html; charset=utf-8"},
+        # Pages are generated per request and name versioned assets; caching
+        # one would pin a reader to an old page and an old bundle.
+        headers={"Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache"},
         body=markup.encode("utf-8"),
     )
 

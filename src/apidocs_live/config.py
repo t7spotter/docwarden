@@ -55,6 +55,16 @@ class Config:
         """Absolute URL path for a route, honouring base_path."""
         return f"{self.base_path}/{path.lstrip('/')}" if path.strip("/") else f"{self.base_path}/"
 
+    def asset(self, path: str) -> str:
+        """URL for a bundled asset, stamped with the version.
+
+        The stamp means an upgrade cannot leave a browser running the previous
+        release's JavaScript out of its cache.
+        """
+        from . import __version__
+
+        return f"{self.url('_static/' + path.lstrip('/'))}?v={__version__}"
+
 
 def from_dict(values: dict[str, Any]) -> Config:
     unknown = set(values) - set(_KEYS)

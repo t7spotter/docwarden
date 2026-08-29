@@ -53,7 +53,7 @@ def handle(request: Request, portal: Portal) -> Response:
     path = _relative(request.path, config.base_path)
 
     if path.startswith("_static/"):
-        return _static(path[len("_static/") :])
+        return _static(path[len("_static/") :], request)
 
     portal.refresh()
 
@@ -182,7 +182,9 @@ def _check_token(request: Request, config: Config) -> Response | None:
     )
 
 
-def _static(relative: str) -> Response:
+def _static(relative: str, request: Request) -> Response:
+    # Query strings are cache-busting only; they are not part of the path.
+    relative = relative.split("?", 1)[0]
     target = (STATIC_DIR / relative).resolve()
     try:
         target.relative_to(STATIC_DIR)
@@ -191,15 +193,22 @@ def _static(relative: str) -> Response:
     if not target.is_file():
         return not_found(f"no asset {relative!r}")
 
+    stat = target.stat()
+    etag = f'"{int(stat.st_mtime)}-{stat.st_size}"'
+
+    # `no-cache` means "revalidate before reusing", not "do not store". Without
+    # it a browser holds a stale shell.js for the full max-age and the page
+    # keeps running old code — which is the opposite of a live docs portal.
+    caching = {"Cache-Control": "no-cache", "ETag": etag}
+
+    if request.header("if-none-match") == etag:
+        return Response(status=304, headers=caching, body=b"")
+
     content_type = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
     if content_type.startswith("text/") or content_type in ("application/javascript", "application/json"):
         content_type += "; charset=utf-8"
 
-    return Response(
-        status=200,
-        headers={"Content-Type": content_type, "Cache-Control": "public, max-age=3600"},
-        body=target.read_bytes(),
-    )
+    return Response(status=200, headers={"Content-Type": content_type, **caching}, body=target.read_bytes())
 
 
 def _spec_file(registry: Registry, filename: str) -> Response:
