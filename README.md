@@ -167,8 +167,10 @@ pip install -e ".[dev,browser]" && playwright install chromium
 pytest tests/test_browser.py
 ```
 
-`api-docs/` in this repository is a sample doc set used by the tests and by
-`apiwarden serve` when you try things out.
+`tests/fixtures/sample-api/` is a small generic doc set this repo ships as its
+own test fixture and demo — try `apiwarden serve tests/fixtures/sample-api` to
+see it running without needing specs of your own yet. Every `./api-docs`
+above is illustrative: point it at whatever directory holds your specs.
 
 ## License
 

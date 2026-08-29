@@ -50,8 +50,8 @@ def browser():
 @pytest.fixture(scope="module")
 def live(tmp_path_factory):
     """A server over a writable copy, so a test may edit the specs."""
-    root = tmp_path_factory.mktemp("live") / "api-docs"
-    shutil.copytree(Path(__file__).resolve().parent.parent / "api-docs", root)
+    root = tmp_path_factory.mktemp("live") / "sample-api"
+    shutil.copytree(Path(__file__).resolve().parent / "fixtures" / "sample-api", root)
 
     port = _free_port()
     portal = build_portal(Config(root=root, title="Browser test", watch=True))

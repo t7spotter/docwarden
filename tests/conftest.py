@@ -50,6 +50,6 @@ def spec_copy(tmp_path: Path) -> Path:
     """A writable copy of the sample, for tests that edit specs."""
     import shutil
 
-    target = tmp_path / "api-docs"
+    target = tmp_path / "sample-api"
     shutil.copytree(SAMPLE_ROOT, target)
     return target
