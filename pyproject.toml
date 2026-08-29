@@ -9,7 +9,7 @@ description = "Watches your OpenAPI specs and serves them live, for humans and A
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-authors = [{name = "Mohamadali Firoozi", email = "firooziparse@gmail.com"}]
+authors = [{name = "Mohamadali Firoozi", email = "t7spotter@gmail.com"}]
 keywords = ["openapi", "documentation", "django", "mcp", "swagger", "live-reload"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -30,7 +30,7 @@ browser = ["playwright>=1.40"]
 docwarden = "docwarden.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/firooziparse/docwarden"
+Homepage = "https://github.com/t7spotter/docwarden"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/docwarden"]
