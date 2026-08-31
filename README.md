@@ -147,7 +147,6 @@ specs, or CLI flags.
 | `root` | `api-docs` | Directory holding the specs |
 | `title` | derived | Portal title |
 | `servers` | spec's own | Base URLs offered for try-it |
-| `renderer` | `vendor` | `vendor` serves the bundled RapiDoc, `cdn` loads it remotely |
 | `theme` | `auto` | `auto` follows the reader's OS setting; `light`/`dark` pin it |
 | `watch` | `False` | Reload when the spec files change |
 | `token` | `None` | Require a shared token on every request (also `APIWARDEN_TOKEN`) |

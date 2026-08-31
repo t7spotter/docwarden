@@ -151,11 +151,6 @@ def test_config_rejects_an_unknown_theme():
         Config(theme="chartreuse")
 
 
-def test_config_rejects_an_unknown_renderer():
-    with pytest.raises(ValueError, match="renderer"):
-        Config(renderer="crayons")
-
-
 def test_config_url_honours_base_path():
     assert Config(base_path="/docs/").url("index.json") == "/docs/index.json"
     assert Config().url("index.json") == "/index.json"
@@ -163,9 +158,9 @@ def test_config_url_honours_base_path():
 
 
 def test_toml_config_is_read(tmp_path: Path):
-    (tmp_path / "apiwarden.toml").write_text('[apiwarden]\ntitle = "From toml"\nrenderer = "cdn"\n')
+    (tmp_path / "apiwarden.toml").write_text('[apiwarden]\ntitle = "From toml"\ntheme = "dark"\n')
     config = from_toml(tmp_path / "apiwarden.toml")
-    assert config.title == "From toml" and config.renderer == "cdn"
+    assert config.title == "From toml" and config.theme == "dark"
 
 
 def test_missing_toml_gives_defaults(tmp_path: Path):

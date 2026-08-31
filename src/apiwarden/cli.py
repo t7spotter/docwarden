@@ -135,7 +135,6 @@ def _common(parser: argparse.ArgumentParser, *, positional: bool = True) -> None
     parser.add_argument("--title", default=None, help="portal title")
     parser.add_argument("--server", action="append", dest="servers", default=None,
                         help="override the API base URL offered in try-it (repeatable)")
-    parser.add_argument("--renderer", choices=["vendor", "cdn"], default=None)
 
 
 def _config(root: Path, args) -> Config:
@@ -149,8 +148,6 @@ def _config(root: Path, args) -> Config:
         config.title = f"{root.resolve().parent.name} API docs"
     if getattr(args, "servers", None):
         config.servers = list(args.servers)
-    if getattr(args, "renderer", None):
-        config.renderer = args.renderer
     if getattr(args, "base_path", None):
         config.base_path = args.base_path
     config.token = getattr(args, "token", None) or config.token or env_token()

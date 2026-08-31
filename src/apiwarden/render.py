@@ -18,8 +18,6 @@ from .config import Config
 from .index import api_summaries, build_index
 from .loader import Registry, Spec
 
-CDN_RAPIDOC = "https://cdn.jsdelivr.net/npm/rapidoc@9.3.8/dist/rapidoc-min.js"
-
 # The editor greys, so the portal reads like the panel it grew out of. RapiDoc
 # takes its palette as attributes rather than CSS variables, so the same values
 # live here and in shell.css.
@@ -252,7 +250,6 @@ def api_page(config: Config, registry: Registry, spec: Spec) -> str:
     # on load, so there is no flash for a reader who pinned a theme.
     theme_name = "dark" if config.theme == "dark" else "light"
     palette = dict(THEMES[theme_name], theme=theme_name)
-    script = CDN_RAPIDOC if config.renderer == "cdn" else config.asset("vendor/rapidoc.js")
 
     payload = {
         "base": config.base_path,
@@ -268,7 +265,7 @@ def api_page(config: Config, registry: Registry, spec: Spec) -> str:
         shell_css=_e(config.asset("shell.css")),
         shell_js=_e(config.asset("shell.js")),
         extra_css=_e(config.asset("rapidoc-extra.css")),
-        script=_e(script),
+        script=_e(config.asset("vendor/rapidoc.js")),
         nav=_portal_nav(config, registry, spec.name),
         config=json.dumps(payload),
         font=_e(FONT_STACK),

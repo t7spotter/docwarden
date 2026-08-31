@@ -194,13 +194,10 @@ def test_sse_stream_emits_the_current_revision(registry, sample_root):
     assert first.decode() == f"event: revision\ndata: {registry.revision}\n\n"
 
 
-def test_head_and_cdn_renderer(registry, sample_root):
-    from apiwarden.render import CDN_RAPIDOC
-
-    portal = Portal(Config(root=sample_root, renderer="cdn"), registry)
+def test_head_and_vendored_renderer(registry, sample_root):
+    portal = Portal(Config(root=sample_root), registry)
     markup = get(portal, f"/{registry.names()[0]}/").body.decode()
-    assert CDN_RAPIDOC in markup
-    assert "/_static/vendor/rapidoc.js" not in markup
+    assert "/_static/vendor/rapidoc.js" in markup
     assert handle(Request("HEAD", "/health"), portal).status == 200
 
 
