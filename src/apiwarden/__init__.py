@@ -5,6 +5,6 @@ apps.py / urls.py / views.py, which Django loads only via INSTALLED_APPS and
 include(), so the package imports cleanly with or without Django installed.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 default_app_config = "apiwarden.apps.ApiwardenConfig"
