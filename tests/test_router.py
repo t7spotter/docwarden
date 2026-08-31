@@ -36,6 +36,16 @@ def test_api_page_hosts_the_renderer_with_portal_nav(portal, registry):
     assert 'id="api-switch"' in markup
     assert 'id="search-input"' in markup
     assert f'"spec": "/display/{name}.json"' in markup
+    # One bearer-token field, set once and applied to every API's Try it panel.
+    assert 'id="auth-token"' in markup
+    assert 'id="auth-token-clear"' in markup
+
+
+def test_landing_page_has_the_token_control_too(portal, registry):
+    # Present on non-RapiDoc pages as well, so it can be set before a spec is
+    # ever opened.
+    markup = get(portal, "/").body.decode()
+    assert 'id="auth-token"' in markup
 
 
 def test_display_spec_carries_the_vendor_extensions(portal, registry):

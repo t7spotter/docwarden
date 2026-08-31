@@ -8,6 +8,7 @@
 (function () {
   var config = window.APIWARDEN || {};
   var base = config.base || "";
+  var docs = document.getElementById("docs");
 
   function url(path) {
     return base + "/" + String(path).replace(/^\//, "");
@@ -137,10 +138,73 @@
     });
   }
 
+  /* ---------- global bearer token, applied to every API's Try it panel ----------
+
+     Lives in localStorage only — never sent to or read by this server — so it
+     survives switching APIs (a real page navigation) without being re-entered.
+     Present on every page, not just RapiDoc ones, so it can be set before the
+     reader has even opened a spec. Namespaced by base path so two apiwarden
+     mounts on the same origin don't share a token. */
+
+  var TOKEN_KEY = "apiwarden:token:" + base;
+  var tokenInput = document.getElementById("auth-token");
+  var tokenClear = document.getElementById("auth-token-clear");
+
+  function readToken() {
+    try {
+      return localStorage.getItem(TOKEN_KEY) || "";
+    } catch (e) {
+      return ""; // private browsing, or storage blocked entirely
+    }
+  }
+
+  function writeToken(value) {
+    try {
+      if (value) localStorage.setItem(TOKEN_KEY, value);
+      else localStorage.removeItem(TOKEN_KEY);
+    } catch (e) {
+      // The field still works for this page load; it just won't carry over.
+    }
+  }
+
+  function applyToken() {
+    if (!docs || typeof docs.setApiKey !== "function") return;
+    var token = readToken();
+    if (!token) return;
+    var schemes = (docs.resolvedSpec && docs.resolvedSpec.securitySchemes) || [];
+    schemes.forEach(function (scheme) {
+      // Basic auth needs a username and password, not one token — skip it.
+      if (scheme.type === "http" && scheme.scheme === "basic") return;
+      docs.setApiKey(scheme.securitySchemeId, token);
+    });
+  }
+
+  if (tokenInput) {
+    tokenInput.value = readToken();
+    var tokenTimer = null;
+    tokenInput.addEventListener("input", function () {
+      clearTimeout(tokenTimer);
+      tokenTimer = setTimeout(function () {
+        writeToken(tokenInput.value.trim());
+        applyToken();
+      }, 200);
+    });
+  }
+
+  if (tokenClear) {
+    tokenClear.addEventListener("click", function () {
+      writeToken("");
+      if (tokenInput) tokenInput.value = "";
+      if (docs && typeof docs.removeAllSecurityKeys === "function") {
+        docs.removeAllSecurityKeys();
+      }
+    });
+  }
+
   /* ---------- the RapiDoc element ---------- */
 
-  var docs = document.getElementById("docs");
   if (!docs) return;
+  docs.addEventListener("spec-loaded", applyToken);
 
   function applyTheme() {
     if (config.theme !== "auto") return;

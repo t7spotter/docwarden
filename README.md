@@ -30,6 +30,11 @@ spec, and it rescues the two things OpenAPI renderers normally drop — the
 top-level `x-*` blocks where teams record rate limits, TTLs and everything else
 that does not fit the schema, which become tables in the overview.
 
+The sidebar also holds one Bearer token field, not one per spec. Set it once
+and it applies to try-it on every API — it lives in the browser's
+`localStorage`, never on the server, so it survives switching between APIs
+without being re-entered.
+
 An edit to a spec reaches an open page in about a second, swapped in through
 the renderer rather than by reloading, so nobody loses their place.
 

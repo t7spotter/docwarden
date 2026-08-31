@@ -179,6 +179,40 @@ def test_an_edit_reaches_the_open_page_without_navigating(page, live):
         spec.write_text(original, encoding="utf-8")
 
 
+def test_bearer_token_applies_across_api_pages(page, live):
+    base, _, portal = live
+    # Needs an app whose spec actually declares a security scheme.
+    app = next(
+        (name for name, spec in portal.registry.specs.items() if spec.data.get("components", {}).get("securitySchemes")),
+        None,
+    )
+    if app is None:
+        pytest.skip("the sample doc set declares no security schemes")
+
+    page.goto(f"{base}/{app}/", wait_until="load")
+    page.wait_for_timeout(2000)
+
+    page.fill("#auth-token", "secret-abc-123")
+    page.wait_for_timeout(400)  # the debounce before it's saved and applied
+
+    applied = page.evaluate("""() => {
+      const schemes = document.getElementById('docs').resolvedSpec.securitySchemes || [];
+      return schemes.map(s => s.finalKeyValue);
+    }""")
+    assert any("secret-abc-123" in (value or "") for value in applied), applied
+
+    # A real navigation to a different API — the field should carry over
+    # without retyping, since it lives in localStorage, not the page.
+    other = next(name for name in portal.registry.names() if name != app)
+    page.goto(f"{base}/{other}/", wait_until="load")
+    page.wait_for_timeout(1000)
+    assert page.input_value("#auth-token") == "secret-abc-123"
+
+    page.click("#auth-token-clear")
+    page.wait_for_timeout(200)
+    assert page.evaluate("localStorage.getItem('apiwarden:token:')") is None
+
+
 def test_right_to_left_text_lays_itself_out(page, live):
     base, _, portal = live
     page.goto(f"{base}/{_first_app(portal)}/", wait_until="load")

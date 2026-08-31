@@ -105,12 +105,31 @@ def _topbar(config: Config, registry: Registry, active: str) -> str:
          autocomplete="off" aria-label="Search every API">
   <ul class="portal-results" id="search-results"></ul>
 </div>
+{_token_control()}
 <nav class="topbar-links">
   <a class="{changes}" href="{_e(config.url("changes"))}">Changes</a>
   <a href="{_e(config.url("index.json"))}">index.json</a>
   <a href="{_e(config.url("llms.txt"))}">llms.txt</a>
 </nav>
 <span class="topbar-rev">rev {_e(registry.revision)}</span>
+"""
+
+
+def _token_control() -> str:
+    """A Bearer token, set once and applied to every API's Try it panel.
+
+    Held only in the reader's browser (localStorage) — the server never sees
+    it. shell.js pushes it into RapiDoc's own auth state via its setApiKey()
+    API whenever a spec loads, so switching APIs doesn't mean re-entering it.
+    """
+    return """
+<div class="portal-auth">
+  <input class="portal-token" id="auth-token" type="password" placeholder="Bearer token"
+         autocomplete="off" spellcheck="false"
+         aria-label="Bearer token, applied to every API&#8217;s Try it panel">
+  <button type="button" class="portal-token-clear" id="auth-token-clear"
+          title="Clear token" aria-label="Clear the bearer token">&times;</button>
+</div>
 """
 
 
@@ -287,6 +306,7 @@ def _portal_nav(config: Config, registry: Registry, active: str) -> str:
 <input class="portal-search" id="search-input" type="search" placeholder="Search all APIs…"
        autocomplete="off" aria-label="Search every API">
 <ul class="portal-results" id="search-results"></ul>
+{_token_control()}
 <div class="portal-links">
   <a href="{_e(config.url("changes"))}">Changes</a>
   <a href="{_e(config.url("index.json"))}">index.json</a>
