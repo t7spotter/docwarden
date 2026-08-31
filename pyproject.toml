@@ -35,7 +35,7 @@ browser = ["playwright>=1.40"]
 apiwarden = "apiwarden.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/t7spotter/docwarden"
+Homepage = "https://github.com/t7spotter/apiwarden"
 
 [tool.hatch.version]
 path = "src/apiwarden/__init__.py"
